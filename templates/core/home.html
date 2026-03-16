@@ -1,0 +1,703 @@
+{% extends 'base/base.html' %}
+{% block title %}ScamShield Nigeria — Protect Yourself from Scams{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── HERO ── */
+  .hero-section {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: #0a0e1a;
+  }
+  .hero-bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .hero-glow {
+    position: absolute;
+    top: -200px; left: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-glow-2 {
+    position: absolute;
+    bottom: -150px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,61,113,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 50px;
+    padding: 6px 18px;
+    font-size: 13px;
+    color: #00e5ff;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-title {
+    font-size: clamp(42px, 6vw, 76px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+  .hero-title .accent { color: #00e5ff; }
+  .hero-title .danger { color: #ff3d71; }
+  .hero-subtitle {
+    font-size: 18px;
+    color: #94a3b8;
+    max-width: 520px;
+    line-height: 1.7;
+    margin: 20px 0 36px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    animation: fadeUp 0.7s ease 0.3s both;
+  }
+  .btn-glow {
+    background: #00e5ff;
+    color: #000;
+    font-weight: 800;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 0 24px rgba(0,229,255,0.3);
+  }
+  .btn-glow:hover {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 0 40px rgba(0,229,255,0.5);
+    transform: translateY(-2px);
+  }
+  .btn-outline-glow {
+    background: transparent;
+    color: #e2e8f0;
+    font-weight: 700;
+    border: 1px solid #1e3a5f;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-outline-glow:hover {
+    border-color: #00e5ff;
+    color: #00e5ff;
+    background: rgba(0,229,255,0.05);
+  }
+
+  /* ── LIVE STATS TICKER ── */
+  .stats-ticker {
+    background: #111827;
+    border-top: 1px solid #1e3a5f;
+    border-bottom: 1px solid #1e3a5f;
+    padding: 16px 0;
+  }
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 40px;
+    border-right: 1px solid #1e3a5f;
+  }
+  .stat-pill:last-child { border-right: none; }
+  .stat-pill .num {
+    font-size: 28px;
+    font-weight: 900;
+    font-family: 'Courier New', monospace;
+    color: #00e5ff;
+  }
+  .stat-pill .label { font-size: 13px; color: #64748b; }
+
+  /* ── SCAN DEMO WIDGET ── */
+  .scan-demo {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.8s ease 0.4s both;
+  }
+  .scan-demo-header {
+    background: #0d1117;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #1e3a5f;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #28c840; }
+  .scan-demo-body { padding: 24px; }
+  .fake-message {
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    line-height: 1.8;
+  }
+  .result-box {
+    background: rgba(255,61,113,0.08);
+    border: 1px solid rgba(255,61,113,0.35);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .result-title { color: #ff3d71; font-weight: 800; font-size: 16px; margin-bottom: 10px; }
+  .reason-item { font-size: 13px; color: #e2e8f0; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+  .reason-dot { color: #ff3d71; margin-top: 2px; flex-shrink: 0; }
+  .confidence-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .conf-bar { flex: 1; height: 8px; background: #0d1117; border-radius: 4px; margin: 0 12px; overflow: hidden; }
+  .conf-fill { height: 100%; background: linear-gradient(90deg, #ff3d71, #ffd600); border-radius: 4px; width: 92%; animation: growBar 1.5s ease 1s both; }
+  @keyframes growBar { from { width: 0 } to { width: 92% } }
+
+  /* ── FEATURES GRID ── */
+  .features-section { padding: 80px 0; background: #0a0e1a; }
+  .section-eyebrow { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #00e5ff; font-weight: 700; margin-bottom: 12px; }
+  .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
+  .section-sub { color: #64748b; font-size: 16px; max-width: 500px; }
+  .feature-card {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 28px;
+    height: 100%;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-color, #00e5ff), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .feature-card:hover { border-color: var(--accent-color, #00e5ff); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon { font-size: 36px; margin-bottom: 16px; }
+  .feature-medal { font-size: 13px; font-weight: 700; margin-bottom: 8px; padding: 3px 10px; border-radius: 4px; display: inline-block; }
+  .medal-gold { background: rgba(255,214,0,0.1); color: #ffd600; border: 1px solid rgba(255,214,0,0.3); }
+  .medal-silver { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+  .medal-bronze { background: rgba(205,127,50,0.1); color: #cd7f32; border: 1px solid rgba(205,127,50,0.3); }
+  .medal-blue { background: rgba(0,229,255,0.1); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); }
+  .feature-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .feature-desc { color: #64748b; font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+  .feature-link { font-size: 14px; font-weight: 700; text-decoration: none; color: var(--accent-color, #00e5ff); }
+  .feature-link:hover { text-decoration: underline; }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { padding: 80px 0; background: #0d1117; }
+  .step-card {
+    text-align: center;
+    padding: 32px 20px;
+    position: relative;
+  }
+  .step-number {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #00e5ff, #0070ff);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 900; color: #000;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 30px rgba(0,229,255,0.3);
+  }
+  .step-connector {
+    position: absolute;
+    top: 56px; right: -50%;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, #1e3a5f, transparent);
+  }
+
+  /* ── SCAM TYPES ── */
+  .scam-types-section { padding: 80px 0; background: #0a0e1a; }
+  .scam-type-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 50px;
+    padding: 10px 20px;
+    margin: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .scam-type-pill:hover { border-color: #00e5ff; color: #00e5ff; transform: scale(1.05); }
+
+  /* ── CTA SECTION ── */
+  .cta-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0d1117 0%, #111827 100%);
+    border-top: 1px solid #1e3a5f;
+    text-align: center;
+  }
+  .cta-box {
+    background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(255,61,113,0.04));
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 20px;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── ALERT TICKER ── */
+  .alert-ticker {
+    background: rgba(255,61,113,0.1);
+    border: 1px solid rgba(255,61,113,0.3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #ff3d71;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeUp 0.6s ease 0.05s both;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    background: #ff3d71;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.6); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════
+     HERO SECTION
+══════════════════════════════════════════════ -->
+<section class="hero-section">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow-2"></div>
+
+  <div class="container py-5">
+    <div class="row align-items-center g-5">
+
+      <!-- Left: Text -->
+      <div class="col-lg-6">
+        <div class="alert-ticker">
+          <div class="pulse-dot"></div>
+          Live system active — monitoring scam patterns across Nigeria
+        </div>
+        <div class="hero-badge">
+          🇳🇬 Built for 3MTT NextGen Knowledge Showcase
+        </div>
+        <h1 class="hero-title">
+          Stop<br>
+          <span class="danger">Nigerian</span><br>
+          <span class="accent">Scams</span> Cold.
+        </h1>
+        <p class="hero-subtitle">
+          AI-powered cybersecurity platform that analyzes WhatsApp messages,
+          detects fake bank alerts, and maps scam activity across all 36 states.
+          Free. Instant. Built for every Nigerian.
+        </p>
+        <div class="hero-cta">
+          <a href="{% url 'whatsapp_scanner' %}" class="btn-glow">
+            🔍 Scan a Message Now
+          </a>
+          <a href="" class="btn-outline-glow">
+            🗺️ View Scam Map
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: Live Demo Widget -->
+      <div class="col-lg-6">
+        <div class="scan-demo">
+          <div class="scan-demo-header">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+            <span style="color:#64748b; font-size:13px; margin-left:8px">ScamShield · Live Analysis</span>
+          </div>
+          <div class="scan-demo-body">
+            <div style="font-size:12px; color:#64748b; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px">Sample WhatsApp Message</div>
+            <div class="fake-message">
+              Hello dear,<br>
+              I am from GTBank.<br>
+              Your account will be blocked today.<br><br>
+              Click this link <span style="color:#00e5ff">bit.ly/gtb-verify</span> immediately to secure your account.
+            </div>
+            <div class="result-box">
+              <div class="result-title">⚠️ HIGH SCAM RISK DETECTED</div>
+              <div class="reason-item"><span class="reason-dot">•</span> Urgency manipulation ("blocked today")</div>
+              <div class="reason-item"><span class="reason-dot">•</span> Bank impersonation (GTBank)</div>
+              <div class="reason-item"><span class="reason-dot">•</span> Suspicious shortened link</div>
+              <div class="reason-item"><span class="reason-dot">•</span> Requesting sensitive account action</div>
+              <div class="confidence-row">
+                <span style="font-size:13px; color:#64748b">Confidence</span>
+                <div class="conf-bar"><div class="conf-fill"></div></div>
+                <span style="font-size:15px; font-weight:800; color:#ff3d71">92%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     LIVE STATS TICKER
+══════════════════════════════════════════════ -->
+<div class="stats-ticker">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-around">
+      <div class="stat-pill">
+        <div>
+          <div class="num">{{ total_scans|default:"0" }}</div>
+          <div class="label">Messages Scanned</div>
+        </div>
+      </div>
+      <div class="stat-pill">
+        <div>
+          <div class="num" style="color:#ff3d71">{{ high_risk_scans|default:"0" }}</div>
+          <div class="label">High Risk Detected</div>
+        </div>
+      </div>
+      <div class="stat-pill">
+        <div>
+          <div class="num" style="color:#ffd600">{{ total_reports|default:"0" }}</div>
+          <div class="label">Scams Reported</div>
+        </div>
+      </div>
+      <div class="stat-pill">
+        <div>
+          <div class="num" style="color:#00c853">{{ patterns_learned|default:"0" }}</div>
+          <div class="label">Patterns Learned</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FEATURES GRID
+══════════════════════════════════════════════ -->
+<section class="features-section">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-lg-6">
+        <div class="section-eyebrow">Platform Features</div>
+        <h2 class="section-title">Everything You Need to<br>Stay Safe Online</h2>
+        <p class="section-sub">Six powerful tools working together to protect Nigerians from every angle of cybercrime.</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- Feature 1 -->
+      <div class="col-md-6 col-lg-4 fade-in-up">
+        <div class="feature-card" style="--accent-color: #ff3d71">
+          <div class="feature-icon">💬</div>
+          <span class="feature-medal medal-gold">🥇 Most Popular</span>
+          <div class="feature-title">WhatsApp Scam Analyzer</div>
+          <div class="feature-desc">Paste any suspicious WhatsApp message. Our AI instantly detects urgency traps, fake bank impersonation, phishing links, and more — with a confidence score and plain-English explanation.</div>
+          <a href="{% url 'whatsapp_scanner' %}" class="feature-link" style="color:#ff3d71">Scan a message →</a>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="col-md-6 col-lg-4 fade-in-up" style="transition-delay:0.1s">
+        <div class="feature-card" style="--accent-color: #ffd600">
+          <div class="feature-icon">🏦</div>
+          <span class="feature-medal medal-silver">🥈 Impressive</span>
+          <div class="feature-title">Fake Bank Alert Detector</div>
+          <div class="feature-desc">Upload any bank transfer alert screenshot. OCR technology reads the text and AI analyzes it for fake formatting, text overlays, and inconsistent bank patterns.</div>
+          <a href="{% url 'bank_alert' %}" class="feature-link" style="color:#ffd600">Upload alert →</a>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="col-md-6 col-lg-4 fade-in-up" style="transition-delay:0.2s">
+        <div class="feature-card" style="--accent-color: #00c853">
+          <div class="feature-icon">🗺️</div>
+          <span class="feature-medal medal-bronze">🥉 Intelligence</span>
+          <div class="feature-title">National Scam Map</div>
+          <div class="feature-desc">A real-time intelligence map showing scam hotspots across all Nigerian states — color coded by activity level. Looks like a government cybercrime dashboard.</div>
+          <a href="" class="feature-link" style="color:#00c853">View map →</a>
+        </div>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="col-md-6 col-lg-4 fade-in-up" style="transition-delay:0.1s">
+        <div class="feature-card" style="--accent-color: #a855f7">
+          <div class="feature-icon">🧠</div>
+          <span class="feature-medal" style="background:rgba(168,85,247,0.1);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">🏅 AI Learning</span>
+          <div class="feature-title">AI Pattern Learning</div>
+          <div class="feature-desc">Unlike rule-based systems, ScamShield learns from every report. When users flag a new scam, the AI updates its detection model — getting smarter with every submission.</div>
+          <a href="{% url 'report_scam' %}" class="feature-link" style="color:#a855f7">Contribute data →</a>
+        </div>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="col-md-6 col-lg-4 fade-in-up" style="transition-delay:0.2s">
+        <div class="feature-card" style="--accent-color: #f97316">
+          <div class="feature-icon">👥</div>
+          <span class="feature-medal" style="background:rgba(249,115,22,0.1);color:#f97316;border:1px solid rgba(249,115,22,0.3)">🎖 Community</span>
+          <div class="feature-title">Community Intelligence</div>
+          <div class="feature-desc">A crowdsourced scam database. Report scammer phone numbers and bank accounts. Look up any number to see if other Nigerians have already reported it.</div>
+          <a href="{% url 'phone_lookup' %}" class="feature-link" style="color:#f97316">Lookup a number →</a>
+        </div>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="col-md-6 col-lg-4 fade-in-up" style="transition-delay:0.3s">
+        <div class="feature-card" style="--accent-color: #00e5ff">
+          <div class="feature-icon">🤖</div>
+          <span class="feature-medal medal-blue">🚀 Bonus</span>
+          <div class="feature-title">AI Education Coach</div>
+          <div class="feature-desc">Ask our AI anything: "Why is this a scam?" or "How do bank alert scams work?" Get clear, friendly explanations that turn every interaction into a cybersecurity lesson.</div>
+          <a href="{% url 'education_coach' %}" class="feature-link">Ask the AI →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════════ -->
+<section class="how-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-eyebrow">Simple Process</div>
+      <h2 class="section-title">How ScamShield Works</h2>
+    </div>
+    <div class="row g-0">
+      <div class="col-md-3">
+        <div class="step-card fade-in-up">
+          <div class="step-number">1</div>
+          <h5 class="fw-bold mb-2">Paste or Upload</h5>
+          <p style="color:#64748b; font-size:14px">Paste a suspicious WhatsApp message or upload a bank alert screenshot</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="step-card fade-in-up" style="transition-delay:0.1s">
+          <div class="step-number">2</div>
+          <h5 class="fw-bold mb-2">AI Analyzes</h5>
+          <p style="color:#64748b; font-size:14px">Our dual-engine — keyword rules + Claude AI — scans for 20+ scam indicators</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="step-card fade-in-up" style="transition-delay:0.2s">
+          <div class="step-number">3</div>
+          <h5 class="fw-bold mb-2">Get Results</h5>
+          <p style="color:#64748b; font-size:14px">Instant risk rating, detailed reasons, and a confidence score in seconds</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="step-card fade-in-up" style="transition-delay:0.3s">
+          <div class="step-number">4</div>
+          <h5 class="fw-bold mb-2">Stay Protected</h5>
+          <p style="color:#64748b; font-size:14px">Follow AI advice, report the scammer, and help protect other Nigerians</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     COMMON SCAM TYPES
+══════════════════════════════════════════════ -->
+<section class="scam-types-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5 fade-in-up">
+        <div class="section-eyebrow">We Detect These</div>
+        <h2 class="section-title">Common Nigerian Scam Types</h2>
+        <p style="color:#64748b">ScamShield is trained specifically on Nigerian scam patterns — from GTBank impersonation to fake INEC messages and crypto investment fraud.</p>
+        <a href="{% url 'whatsapp_scanner' %}" class="btn-glow d-inline-block mt-3">Start Scanning Free</a>
+      </div>
+      <div class="col-lg-7 fade-in-up" style="transition-delay:0.15s">
+        <div class="text-center">
+          <div class="scam-type-pill">🏦 Bank Impersonation</div>
+          <div class="scam-type-pill">💸 Fake Bank Alerts</div>
+          <div class="scam-type-pill">💰 Investment Fraud</div>
+          <div class="scam-type-pill">🎰 Lottery Scams</div>
+          <div class="scam-type-pill">💔 Romance Scams</div>
+          <div class="scam-type-pill">🪙 Crypto Scams</div>
+          <div class="scam-type-pill">💼 Fake Job Offers</div>
+          <div class="scam-type-pill">🎁 Prize Scams</div>
+          <div class="scam-type-pill">🔗 Phishing Links</div>
+          <div class="scam-type-pill">📱 SIM Swap Fraud</div>
+          <div class="scam-type-pill">🏛️ Govt Impersonation</div>
+          <div class="scam-type-pill">📦 Package Scams</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     RECENT ACTIVITY
+══════════════════════════════════════════════ -->
+{% if recent_scans %}
+<section style="padding: 60px 0; background: #0d1117; border-top: 1px solid #1e3a5f">
+  <div class="container">
+    <div class="row align-items-center mb-4">
+      <div class="col">
+        <h4 class="fw-bold mb-0">Recent Scans <span style="color:#64748b; font-size:14px; font-weight:400">(anonymized)</span></h4>
+      </div>
+      <div class="col-auto">
+        <div class="pulse-dot d-inline-block" style="margin-right:6px"></div>
+        <span style="font-size:13px; color:#64748b">Live</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-dark" style="border-color:#1e3a5f">
+        <thead>
+          <tr style="border-color:#1e3a5f">
+            <th style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px">Time</th>
+            <th style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px">Risk Level</th>
+            <th style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px">Scam Type</th>
+            <th style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px">State</th>
+            <th style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px">Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in recent_scans %}
+          <tr style="border-color:#1e3a5f">
+            <td style="color:#64748b; font-size:13px">{{ scan.created_at|timesince }} ago</td>
+            <td>
+              {% if scan.risk_level == "HIGH" %}
+              <span style="background:rgba(255,61,113,0.15); color:#ff3d71; border:1px solid rgba(255,61,113,0.3); padding:3px 10px; border-radius:4px; font-size:12px; font-weight:700">HIGH</span>
+              {% elif scan.risk_level == "MEDIUM" %}
+              <span style="background:rgba(255,214,0,0.15); color:#ffd600; border:1px solid rgba(255,214,0,0.3); padding:3px 10px; border-radius:4px; font-size:12px; font-weight:700">MED</span>
+              {% else %}
+              <span style="background:rgba(0,200,83,0.15); color:#00c853; border:1px solid rgba(0,200,83,0.3); padding:3px 10px; border-radius:4px; font-size:12px; font-weight:700">LOW</span>
+              {% endif %}
+            </td>
+            <td style="font-size:13px; text-transform:capitalize">{{ scan.scam_type|default:"—" }}</td>
+            <td style="font-size:13px; text-transform:capitalize">{{ scan.state|default:"—" }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="flex:1; height:6px; background:#1e3a5f; border-radius:3px; max-width:80px">
+                  <div style="width:{{ scan.confidence }}%; height:100%; background:{% if scan.confidence > 70 %}#ff3d71{% elif scan.confidence > 40 %}#ffd600{% else %}#00c853{% endif %}; border-radius:3px"></div>
+                </div>
+                <span style="font-size:13px; font-family:monospace">{{ scan.confidence }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════
+     CTA SECTION
+══════════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-box">
+      <div class="section-eyebrow mb-3">Join the Movement</div>
+      <h2 class="section-title">Protect Yourself.<br>Protect Nigeria.</h2>
+      <p style="color:#64748b; font-size:17px; max-width:480px; margin:16px auto 36px">
+        Every scan you run, every scammer you report — helps build the largest community-powered anti-scam network in Africa.
+      </p>
+      <div class="d-flex justify-content-center flex-wrap gap-3">
+        <a href="{% url 'whatsapp_scanner' %}" class="btn-glow">🔍 Scan a Message</a>
+        <a href="{% url 'report_scam' %}" class="btn-outline-glow">📢 Report a Scammer</a>
+        <a href="{% url 'education_coach' %}" class="btn-outline-glow">🤖 Ask the AI Coach</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Scroll-triggered fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+  // Animate stat numbers on scroll
+  function animateCounter(el, target) {
+    let current = 0;
+    const step = Math.ceil(target / 60);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current.toLocaleString();
+      if (current >= target) clearInterval(timer);
+    }, 20);
+  }
+
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.num').forEach(numEl => {
+          const val = parseInt(numEl.textContent) || 0;
+          if (val > 0) animateCounter(numEl, val);
+        });
+        statsObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  const ticker = document.querySelector('.stats-ticker');
+  if (ticker) statsObserver.observe(ticker);
+</script>
+{% endblock %}

@@ -1,0 +1,635 @@
+{% extends 'base/base.html' %}
+{% block title %}WhatsApp Scam Analyzer — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080c14;
+  --s1:      #0f1623;
+  --s2:      #141d2e;
+  --s3:      #1a2540;
+  --border:  #1e3a5f;
+  --border2: #243554;
+  --cyan:    #00e5ff;
+  --c10:     rgba(0,229,255,.10);
+  --c20:     rgba(0,229,255,.20);
+  --blue:    #0070ff;
+  --green:   #00c853;
+  --red:     #ff3d71;
+  --gold:    #ffd600;
+  --text:    #e2e8f0;
+  --muted:   #64748b;
+  --muted2:  #475569;
+  --font:    'Sora', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+}
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); }
+
+/* ── HERO ── */
+.wa-hero {
+  background: linear-gradient(135deg, #0d1117 0%, #111827 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 0 38px;
+  margin-bottom: 40px;
+  position: relative; overflow: hidden;
+}
+.wa-hero::before {
+  content: ''; position: absolute;
+  top: -120px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,229,255,.05), transparent 65%);
+  pointer-events: none;
+}
+.wa-hero::after {
+  content: '💬'; position: absolute;
+  right: 60px; top: 50%; transform: translateY(-50%);
+  font-size: 120px; opacity: .04; pointer-events: none;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--c10); border: 1px solid var(--c20);
+  border-radius: 50px; padding: 4px 14px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 16px;
+}
+.hero-title {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 900; letter-spacing: -1.5px;
+  line-height: 1.1; margin-bottom: 12px;
+}
+.hero-title em { color: var(--cyan); font-style: normal; }
+.hero-sub { color: var(--muted); font-size: 15px; max-width: 520px; line-height: 1.75; }
+.hero-stats {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  margin-top: 24px;
+}
+.hstat {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted);
+}
+.hstat-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── PAGE ── */
+.wa-page { padding: 0 0 80px; }
+
+/* ── FORM CARD ── */
+.form-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  transition: border-color .3s;
+}
+.form-card:focus-within { border-color: rgba(0,229,255,.35); }
+.fc-head {
+  background: #0d1117;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.fc-head h4 { margin: 0; font-size: 15px; font-weight: 800; }
+.fc-head p  { margin: 0; font-size: 12px; color: var(--muted); }
+.fc-body { padding: 24px; }
+
+.field-lbl {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted2); margin-bottom: 8px; display: block;
+}
+
+.msg-textarea {
+  width: 100%;
+  background: #0d1117 !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  resize: vertical;
+  min-height: 160px;
+  transition: border-color .2s, box-shadow .2s !important;
+  font-family: var(--font) !important;
+}
+.msg-textarea:focus {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08) !important;
+  outline: none !important;
+}
+.msg-textarea::placeholder { color: var(--muted2) !important; }
+
+.sel-dark {
+  background: #0d1117 !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 10px !important;
+  padding: 11px 14px !important;
+  font-size: 14px !important;
+  width: 100%;
+  font-family: var(--font);
+}
+.sel-dark:focus {
+  border-color: var(--cyan) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08) !important;
+}
+.sel-dark option { background: #0d1117; }
+
+.char-count {
+  font-size: 11px; color: var(--muted2);
+  text-align: right; margin-top: 5px;
+}
+.char-count.warn { color: var(--gold); }
+
+/* ── EXAMPLE SCAMS ── */
+.examples-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.ex-btn {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--font);
+}
+.ex-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--c10); }
+
+/* ── SUBMIT ── */
+.btn-scan {
+  background: var(--cyan); color: #000;
+  font-weight: 800; border: none;
+  padding: 14px 28px; border-radius: 12px;
+  font-size: 15px; cursor: pointer;
+  width: 100%; transition: all .2s;
+  box-shadow: 0 0 24px rgba(0,229,255,.22);
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--font);
+  letter-spacing: .3px;
+}
+.btn-scan:hover:not(:disabled) {
+  background: #fff;
+  box-shadow: 0 0 40px rgba(0,229,255,.45);
+  transform: translateY(-2px);
+}
+.btn-scan:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── RESULT CARD ── */
+.result-card {
+  border-radius: 18px; overflow: hidden;
+  margin-bottom: 24px;
+  animation: rIn .45s cubic-bezier(.16,1,.3,1);
+}
+@keyframes rIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+
+.result-HIGH   { border: 1px solid rgba(255,61,113,.45); }
+.result-MEDIUM { border: 1px solid rgba(255,214,0,.45); }
+.result-LOW    { border: 1px solid rgba(0,200,83,.45); }
+.result-SAFE   { border: 1px solid rgba(0,200,83,.55); }
+
+.result-header {
+  padding: 24px 26px;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.rh-HIGH   { background: linear-gradient(135deg, rgba(255,61,113,.12), rgba(255,61,113,.05)); }
+.rh-MEDIUM { background: linear-gradient(135deg, rgba(255,214,0,.10), rgba(255,214,0,.04)); }
+.rh-LOW    { background: linear-gradient(135deg, rgba(0,200,83,.10), rgba(0,200,83,.04)); }
+.rh-SAFE   { background: linear-gradient(135deg, rgba(0,200,83,.12), rgba(0,200,83,.05)); }
+
+.risk-icon { font-size: 44px; flex-shrink: 0; animation: iconBounce .5s .2s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes iconBounce { from{transform:scale(0)} to{transform:scale(1)} }
+
+.risk-info { flex: 1; min-width: 0; }
+.risk-label {
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 900; letter-spacing: -.5px;
+}
+.col-HIGH   { color: var(--red); }
+.col-MEDIUM { color: var(--gold); }
+.col-LOW    { color: var(--green); }
+.col-SAFE   { color: var(--green); }
+
+.risk-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+.conf-block { text-align: right; flex-shrink: 0; }
+.conf-num {
+  font-size: 36px; font-weight: 900;
+  font-family: var(--mono); line-height: 1;
+}
+.conf-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+/* Scam type badge */
+.scam-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.25);
+  color: var(--cyan); border-radius: 50px;
+  padding: 3px 12px; font-size: 12px; font-weight: 700;
+  margin-top: 8px; text-transform: capitalize;
+}
+
+/* Result body */
+.result-body { padding: 24px 26px; background: var(--s1); }
+
+/* Confidence bar */
+.cbar-wrap { margin-bottom: 22px; }
+.cbar-top  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cbar-lbl  { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.cbar-pct  { font-size: 13px; font-weight: 800; font-family: var(--mono); }
+.cbar-track { background: var(--s3); height: 8px; border-radius: 4px; overflow: hidden; }
+.cbar-fill  { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.16,1,.3,1); }
+
+/* Reasons */
+.sec-head { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--muted2); margin-bottom: 12px; }
+.reasons-list { margin-bottom: 20px; }
+.reason-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(30,58,95,.6);
+  font-size: 14px; line-height: 1.55;
+  animation: rItem .3s ease both;
+}
+.reason-item:last-child { border-bottom: none; }
+@keyframes rItem { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+.reason-item:nth-child(2) { animation-delay:.05s }
+.reason-item:nth-child(3) { animation-delay:.1s }
+.reason-item:nth-child(4) { animation-delay:.15s }
+.r-dot { flex-shrink: 0; font-size: 16px; margin-top: 1px; }
+
+/* AI Box */
+.ai-box {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 12px 12px 0;
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.ai-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--cyan); margin-bottom: 6px; }
+.ai-text  { font-size: 14px; color: #94a3b8; line-height: 1.75; }
+
+/* Advice */
+.advice-box { border-radius: 12px; padding: 14px 18px; font-size: 14px; line-height: 1.65; }
+.adv-HIGH   { background: rgba(255,61,113,.08); border: 1px solid rgba(255,61,113,.3); }
+.adv-MEDIUM { background: rgba(255,214,0,.08);  border: 1px solid rgba(255,214,0,.3); }
+.adv-LOW    { background: rgba(0,200,83,.08);   border: 1px solid rgba(0,200,83,.3); }
+.adv-SAFE   { background: rgba(0,200,83,.08);   border: 1px solid rgba(0,200,83,.3); }
+
+/* Action buttons row */
+.action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.act-btn {
+  flex: 1; min-width: 140px;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 16px;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+  text-align: center; text-decoration: none;
+  transition: all .2s; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.act-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--c10); }
+.act-btn.danger:hover { border-color: var(--red); color: var(--red); background: rgba(255,61,113,.08); }
+
+/* ── SIDEBAR ── */
+.scard { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.scard-title { font-size: 13px; font-weight: 800; margin-bottom: 12px; }
+.tip-list { list-style: none; padding: 0; margin: 0; }
+.tip-list li { font-size: 13px; color: var(--muted); padding: 7px 0; border-bottom: 1px solid rgba(30,58,95,.5); display: flex; gap: 8px; line-height: 1.5; }
+.tip-list li:last-child { border-bottom: none; }
+.tip-list strong { color: var(--text); }
+
+.tool-lnk {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: #0d1117;
+  border: 1px solid var(--border); border-radius: 9px;
+  text-decoration: none; color: var(--text);
+  font-size: 13px; margin-bottom: 8px;
+  transition: border-color .2s;
+}
+.tool-lnk:hover { border-color: var(--cyan); color: var(--text); }
+.tool-lnk:last-child { margin-bottom: 0; }
+
+/* ── SCAM TYPES INFO ── */
+.scam-types { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.st-item {
+  background: #0d1117; border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .wa-hero { padding: 32px 0 26px; margin-bottom: 28px; }
+  .hero-stats { gap: 14px; }
+  .conf-num { font-size: 28px; }
+  .result-header { gap: 12px; }
+  .action-row .act-btn { min-width: 120px; font-size: 12px; }
+  .scam-types { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="wa-hero">
+  <div class="container">
+    <div class="eyebrow">🤖 AI-Powered</div>
+    <h1 class="hero-title">
+      💬 WhatsApp <em>Scam</em><br>Analyzer
+    </h1>
+    <p class="hero-sub">
+      Paste any suspicious message and SABI will detect scam patterns,
+      explain the red flags, and tell you exactly what to do — in seconds.
+    </p>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-dot"></div> AI running 24/7</div>
+      <div class="hstat">🇳🇬 Nigeria-trained model</div>
+      <div class="hstat">⚡ Results in under 3 seconds</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="wa-page">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- ══ LEFT ══ -->
+      <div class="col-lg-8">
+
+        <!-- RESULT (shown above form after submit) -->
+        {% if result %}
+        <div class="result-card result-{{ result.risk_level }}" id="resultCard">
+
+          <!-- Header -->
+          <div class="result-header rh-{{ result.risk_level }}">
+            <div class="risk-icon">
+              {% if result.risk_level == 'HIGH' %}🚨
+              {% elif result.risk_level == 'MEDIUM' %}⚠️
+              {% else %}✅{% endif %}
+            </div>
+            <div class="risk-info">
+              <div class="risk-label col-{{ result.risk_level }}">
+                {% if result.risk_level == 'HIGH' %}HIGH SCAM RISK
+                {% elif result.risk_level == 'MEDIUM' %}MEDIUM RISK — Be Careful
+                {% elif result.risk_level == 'SAFE' %}LOOKS SAFE
+                {% else %}LOW RISK — Probably Okay{% endif %}
+              </div>
+              <div class="risk-sub">
+                {% if result.risk_level == 'HIGH' %}Do NOT respond, click links, or send money
+                {% elif result.risk_level == 'MEDIUM' %}Verify independently before taking any action
+                {% else %}No strong scam indicators detected{% endif %}
+              </div>
+              {% if result.scam_type and result.scam_type != 'other' %}
+              <div class="scam-badge">🏷 {{ result.scam_type|title }}</div>
+              {% endif %}
+            </div>
+            <div class="conf-block">
+              <div class="conf-num col-{{ result.risk_level }}">{{ result.confidence }}%</div>
+              <div class="conf-lbl">Confidence</div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="result-body">
+
+            <!-- Confidence bar -->
+            <div class="cbar-wrap">
+              <div class="cbar-top">
+                <span class="cbar-lbl">Risk Confidence</span>
+                <span class="cbar-pct col-{{ result.risk_level }}">{{ result.confidence }}%</span>
+              </div>
+              <div class="cbar-track">
+                <div class="cbar-fill"
+                  style="width:{{ result.confidence }}%; background: {% if result.risk_level == 'HIGH' %}linear-gradient(90deg,#ff3d71,#cc0040){% elif result.risk_level == 'MEDIUM' %}linear-gradient(90deg,#ffd600,#cc9900){% else %}linear-gradient(90deg,#00c853,#009940){% endif %}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Reasons -->
+            {% if result.reasons %}
+            <div class="sec-head">🔍 Red Flags Detected</div>
+            <div class="reasons-list">
+              {% for reason in result.reasons %}
+              <div class="reason-item">
+                <span class="r-dot">{% if result.risk_level == 'HIGH' %}🔴{% elif result.risk_level == 'MEDIUM' %}🟡{% else %}🟢{% endif %}</span>
+                <span>{{ reason }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- AI Explanation -->
+            {% if result.explanation %}
+            <div class="ai-box">
+              <div class="ai-label">🤖 SABI's Analysis</div>
+              <div class="ai-text">{{ result.explanation }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Advice -->
+            {% if result.advice %}
+            <div class="advice-box adv-{{ result.risk_level }}">
+              <strong>💡 What to do:</strong> {{ result.advice }}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="action-row">
+              <a href="{% url 'report_scam' %}" class="act-btn danger">🚨 Report Scammer</a>
+              <a href="{% url 'phone_lookup' %}" class="act-btn">📞 Lookup Number</a>
+              <button class="act-btn" onclick="copyResult()">📋 Copy Result</button>
+              <button class="act-btn" onclick="window.scrollTo({top:9999,behavior:'smooth'})">🔄 Scan Another</button>
+            </div>
+
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- FORM CARD -->
+        <div class="form-card">
+          <div class="fc-head">
+            <span style="font-size:22px">💬</span>
+            <div>
+              <h4>Paste Suspicious Message</h4>
+              <p>WhatsApp message, SMS, email body — any text</p>
+            </div>
+          </div>
+          <div class="fc-body">
+            <form method="POST" id="scanForm">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label class="field-lbl">Message to analyze <span style="color:var(--red)">*</span></label>
+                <textarea
+                  name="message"
+                  class="msg-textarea"
+                  id="msgInput"
+                  rows="7"
+                  placeholder="Paste the suspicious message here...&#10;&#10;Example: 'Dear customer, your GTBank account has been flagged. Click the link below to verify your BVN or your account will be suspended today.'"
+                  required
+                >{{ form_message }}</textarea>
+                <div class="char-count" id="charCount">0 / 2000 characters</div>
+              </div>
+
+              <!-- Example messages -->
+              <div class="mb-4">
+                <div style="font-size:11px;color:var(--muted2);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;font-weight:700">Try an example:</div>
+                <div class="examples-row">
+                  <button type="button" class="ex-btn" onclick="fillExample('bank')">🏦 Fake Bank Alert</button>
+                  <button type="button" class="ex-btn" onclick="fillExample('job')">💼 Job Scam</button>
+                  <button type="button" class="ex-btn" onclick="fillExample('invest')">📈 Investment Fraud</button>
+                  <button type="button" class="ex-btn" onclick="fillExample('lottery')">🎰 Lottery Scam</button>
+                  <button type="button" class="ex-btn" onclick="fillExample('otp')">🔐 OTP Theft</button>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                  <label class="field-lbl">Your State (for scam map)</label>
+                  <select name="state" class="sel-dark form-select">
+                    <option value="other">-- Select State --</option>
+                    {% for val, label in nigerian_states %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-scan" id="scanBtn">
+                🔍 Analyze Message
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ RIGHT SIDEBAR ══ -->
+      <div class="col-lg-4">
+
+        <div class="scard" style="border-color:var(--c20)">
+          <div class="scard-title" style="color:var(--cyan)">⚡ What SABI Detects</div>
+          <ul class="tip-list">
+            <li>🏦 <span><strong>Bank Impersonation</strong> — Fake GTBank, Zenith, Access messages</span></li>
+            <li>💰 <span><strong>Investment Fraud</strong> — "Double your money in 7 days"</span></li>
+            <li>💼 <span><strong>Job Scams</strong> — "Earn ₦50,000 daily from home"</span></li>
+            <li>🎰 <span><strong>Lottery Scams</strong> — Fake MTN/Glo prize alerts</span></li>
+            <li>📱 <span><strong>OTP Theft</strong> — Account takeover attempts</span></li>
+            <li>🪙 <span><strong>Crypto Fraud</strong> — Fake investment platforms</span></li>
+            <li>💔 <span><strong>Romance Scams</strong> — "Soldier abroad" stories</span></li>
+          </ul>
+        </div>
+
+        <div class="scard" style="background:rgba(255,214,0,.03);border-color:rgba(255,214,0,.2)">
+          <div class="scard-title" style="color:var(--gold)">🧠 How to Stay Safe</div>
+          <ul class="tip-list">
+            <li>🔐 Never share OTP with anyone — ever</li>
+            <li>🏦 Verify alerts in your bank app, not SMS</li>
+            <li>🔗 Don't click links from unknown numbers</li>
+            <li>📞 Call your bank on their official number</li>
+            <li>🚫 No legitimate job pays without interview</li>
+          </ul>
+        </div>
+
+        <div class="scard">
+          <div class="scard-title">🔗 Other Tools</div>
+          <a href="{% url 'bank_alert' %}"    class="tool-lnk">🏦 Fake Bank Alert Detector</a>
+          <a href="{% url 'link_scanner' %}"  class="tool-lnk">🔗 Phishing Link Scanner</a>
+          <a href="{% url 'phone_lookup' %}"  class="tool-lnk">📞 Phone Number Lookup</a>
+          <a href="{% url 'report_scam' %}"   class="tool-lnk">🚨 Report a Scammer</a>
+        </div>
+
+        <div class="scard" style="border-color:rgba(255,61,113,.3)">
+          <div class="scard-title" style="color:var(--red)">🚨 Emergency</div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0">
+            Already been scammed? Call your bank immediately:<br><br>
+            <strong style="color:var(--text)">GTBank:</strong> 0700-482-6000<br>
+            <strong style="color:var(--text)">Zenith:</strong> 0700-979-7979<br>
+            <strong style="color:var(--text)">Access:</strong> 0700-300-0000<br>
+            <strong style="color:var(--text)">EFCC Hotline:</strong> <strong style="color:var(--red)">0800-326-6722</strong>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Character counter ─────────────────────────────────────────
+const msgInput  = document.getElementById('msgInput');
+const charCount = document.getElementById('charCount');
+function updateCount() {
+  const n = msgInput.value.length;
+  charCount.textContent = n + ' / 2000 characters';
+  charCount.className = 'char-count' + (n > 1800 ? ' warn' : '');
+}
+msgInput.addEventListener('input', updateCount);
+updateCount();
+
+// ── Example messages ──────────────────────────────────────────
+const examples = {
+  bank:    'Dear Valued Customer, Your GTBank account has been flagged for suspicious activity. Your account will be BLOCKED in 24 hours unless you verify your BVN immediately. Click here to verify: bit.ly/gtb-verify-bvn. Ignore at your own risk.',
+  job:     'URGENT VACANCY! We are recruiting for remote data entry jobs. Earn ₦80,000 weekly. No experience needed. WhatsApp us now to apply. Requirement: Pay ₦5,000 registration fee to secure your slot. Limited slots available!',
+  invest:  'Hello, I am an investment broker with a verified platform. Invest ₦50,000 and receive ₦150,000 in 7 days. 100% guaranteed returns. Over 500 Nigerians have benefited this month alone. DM me now to get started!',
+  lottery: 'Congratulations! Your MTN number has won ₦2,500,000 in the MTN 30th Anniversary Promo. To claim your prize, pay ₦15,000 processing fee to account: 0123456789 (GTBank - John Doe). Call 08099887766 now!',
+  otp:     'Hello, I accidentally sent my WhatsApp verification code to your number. Please send me the 6-digit code you just received. It is very urgent, I am locked out of my account. Please help me quickly.',
+};
+function fillExample(type) {
+  msgInput.value = examples[type] || '';
+  updateCount();
+  msgInput.focus();
+  msgInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Loading state ─────────────────────────────────────────────
+document.getElementById('scanForm').addEventListener('submit', function() {
+  const btn = document.getElementById('scanBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:15px;height:15px;border-width:2px"></span> Analyzing with AI...';
+  btn.disabled = true;
+});
+
+// ── Copy result ───────────────────────────────────────────────
+function copyResult() {
+  {% if result %}
+  const text = [
+    'ScamShield Analysis Result',
+    '─────────────────────────',
+    'Risk: {{ result.risk_level }} ({{ result.confidence }}%)',
+    {% if result.reasons %}'Reasons: {% for r in result.reasons %}{{ r }}{% if not forloop.last %} | {% endif %}{% endfor %}',{% endif %}
+    {% if result.explanation %}'Analysis: {{ result.explanation }}',{% endif %}
+    {% if result.advice %}'Advice: {{ result.advice }}',{% endif %}
+    '─────────────────────────',
+    'Powered by ScamShield Nigeria | scamshield.ng',
+  ].join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.innerHTML = '📋 Copy Result'; }, 2500);
+  });
+  {% endif %}
+}
+
+// ── Scroll to result on load ──────────────────────────────────
+{% if result %}
+window.addEventListener('load', function() {
+  const card = document.getElementById('resultCard');
+  if (card) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+});
+{% endif %}
+</script>
+{% endblock %}

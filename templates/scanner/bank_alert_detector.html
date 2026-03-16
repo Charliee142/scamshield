@@ -1,0 +1,542 @@
+{% extends 'base/base.html' %}
+{% block title %}Bank Alert Detector — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── PAGE ── */
+  .det-page { background: #0a0e1a; min-height: 100vh; padding: 36px 0 80px; }
+
+  /* ── HERO ── */
+  .det-hero {
+    background: linear-gradient(135deg, #111827, #0d1117);
+    border-bottom: 1px solid #1e3a5f;
+    padding: 40px 0 32px;
+    margin-bottom: 36px;
+    position: relative; overflow: hidden;
+  }
+  .det-hero::before {
+    content: ''; position: absolute; top: -80px; right: -60px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(0,229,255,0.05), transparent 70%);
+  }
+  .eyebrow  { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #00e5ff; font-weight: 700; margin-bottom: 8px; }
+  .pg-title { font-size: 34px; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; }
+  .pg-title span { color: #00e5ff; }
+  .pg-sub   { color: #64748b; font-size: 14px; max-width: 500px; line-height: 1.7; }
+
+  /* ── CARDS ── */
+  .card-dark {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .card-head {
+    background: #0d1117;
+    padding: 16px 22px;
+    border-bottom: 1px solid #1e3a5f;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card-head h4 { margin: 0; font-size: 15px; font-weight: 800; }
+  .card-head p  { margin: 0; font-size: 12px; color: #64748b; }
+  .card-body { padding: 22px; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed #1e3a5f;
+    border-radius: 12px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+  .upload-zone:hover,
+  .upload-zone.over { border-color: #00e5ff; background: rgba(0,229,255,.03); }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; width: 100%; height: 100%; cursor: pointer;
+  }
+  .uz-icon  { font-size: 44px; margin-bottom: 12px; display: block; }
+  .uz-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .uz-sub   { font-size: 13px; color: #64748b; }
+
+  /* ── PREVIEW ── */
+  #previewBox {
+    display: none;
+    margin-top: 16px;
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 14px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+  }
+  #previewBox img {
+    width: 80px; height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #1e3a5f;
+    flex-shrink: 0;
+  }
+  #previewBox .pv-info { flex: 1; min-width: 0; }
+  #previewBox .pv-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #previewBox .pv-size { font-size: 12px; color: #64748b; margin-top: 2px; }
+  #previewBox .pv-ok   { color: #00c853; font-size: 20px; }
+
+  /* ── SELECT ── */
+  .sel-dark {
+    background: #0d1117!important;
+    border: 1px solid #1e3a5f!important;
+    color: #e2e8f0!important;
+    border-radius: 10px!important;
+    padding: 10px 14px!important;
+    font-size: 14px!important;
+    width: 100%;
+  }
+  .sel-dark:focus { border-color: #00e5ff!important; outline: none!important; box-shadow: 0 0 0 3px rgba(0,229,255,.1)!important; }
+  .field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 7px; display: block; }
+
+  /* ── SUBMIT BUTTON ── */
+  .btn-analyze {
+    background: #00e5ff; color: #000;
+    font-weight: 800; border: none;
+    padding: 13px 28px; border-radius: 10px;
+    font-size: 15px; cursor: pointer;
+    width: 100%; transition: all .2s;
+    box-shadow: 0 0 20px rgba(0,229,255,.2);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+  }
+  .btn-analyze:hover:not(:disabled) {
+    background: #fff;
+    box-shadow: 0 0 32px rgba(0,229,255,.4);
+    transform: translateY(-2px);
+  }
+  .btn-analyze:disabled { background: #1e3a5f; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    background: rgba(255,61,113,.1);
+    border: 1px solid rgba(255,61,113,.4);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #ff3d71;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+
+  /* ── RESULT CARD ── */
+  .result-wrap {
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    animation: rIn .4s ease;
+  }
+  @keyframes rIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+
+  .result-HIGH   { border: 1px solid rgba(255,61,113,.45); }
+  .result-MEDIUM { border: 1px solid rgba(255,214,0,.45); }
+  .result-LOW    { border: 1px solid rgba(0,200,83,.45); }
+  .result-SAFE   { border: 1px solid rgba(0,200,83,.55); }
+
+  .result-top {
+    padding: 20px 22px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .rt-HIGH   { background: rgba(255,61,113,.08); }
+  .rt-MEDIUM { background: rgba(255,214,0,.07); }
+  .rt-LOW    { background: rgba(0,200,83,.07); }
+  .rt-SAFE   { background: rgba(0,200,83,.09); }
+
+  .res-icon  { font-size: 40px; flex-shrink: 0; }
+  .res-title { font-size: 20px; font-weight: 900; }
+  .col-HIGH   { color: #ff3d71; }
+  .col-MEDIUM { color: #ffd600; }
+  .col-LOW    { color: #00c853; }
+  .col-SAFE   { color: #00c853; }
+
+  .conf-block { margin-left: auto; text-align: right; }
+  .conf-big   { font-size: 30px; font-weight: 900; font-family: 'Courier New', monospace; }
+  .conf-lbl   { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+  .result-body { padding: 22px; background: #111827; }
+
+  /* confidence bar */
+  .cbar-track { background: #1e3a5f; height: 7px; border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+  .cbar-fill  { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+  /* meta pills */
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .mpill {
+    background: #0d1117; border: 1px solid #1e3a5f;
+    border-radius: 50px; padding: 4px 12px;
+    font-size: 12px; color: #94a3b8;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .mpill strong { color: #e2e8f0; }
+
+  /* reasons */
+  .sec-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 10px; }
+  .reason-row { display: flex; gap: 9px; padding: 8px 0; border-bottom: 1px solid #1e3a5f; font-size: 14px; line-height: 1.5; }
+  .reason-row:last-child { border-bottom: none; }
+  .reason-dot { flex-shrink: 0; font-size: 15px; }
+
+  /* AI explanation */
+  .ai-box {
+    background: #0d1117; border: 1px solid #1e3a5f;
+    border-left: 3px solid #00e5ff;
+    border-radius: 0 10px 10px 0;
+    padding: 13px 16px; margin: 16px 0;
+  }
+  .ai-box .ai-lbl { font-size: 11px; color: #00e5ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .ai-box .ai-txt { font-size: 14px; color: #94a3b8; line-height: 1.7; }
+
+  /* advice */
+  .advice-box { border-radius: 10px; padding: 13px 16px; font-size: 14px; line-height: 1.6; }
+  .adv-HIGH   { background: rgba(255,61,113,.08); border: 1px solid rgba(255,61,113,.3); }
+  .adv-MEDIUM { background: rgba(255,214,0,.08);  border: 1px solid rgba(255,214,0,.3); }
+  .adv-LOW    { background: rgba(0,200,83,.08);   border: 1px solid rgba(0,200,83,.3); }
+  .adv-SAFE   { background: rgba(0,200,83,.08);   border: 1px solid rgba(0,200,83,.3); }
+
+  /* OCR */
+  .ocr-pre {
+    background: #0d1117; border: 1px solid #1e3a5f; border-radius: 8px;
+    padding: 12px; font-size: 12px; font-family: 'Courier New', monospace;
+    color: #64748b; max-height: 130px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-word; margin-top: 10px;
+  }
+
+  /* ── SIDEBAR ── */
+  .scard { background: #111827; border: 1px solid #1e3a5f; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .scard h6 { font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+  .slist { list-style: none; padding: 0; margin: 0; }
+  .slist li { font-size: 13px; color: #64748b; padding: 6px 0; border-bottom: 1px solid #1e3a5f; display: flex; gap: 8px; }
+  .slist li:last-child { border-bottom: none; }
+
+  .step-row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .step-n { width: 26px; height: 26px; border-radius: 7px; background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.2); color: #00e5ff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-t { font-size: 13px; color: #64748b; line-height: 1.5; }
+  .step-t strong { color: #e2e8f0; display: block; margin-bottom: 1px; }
+
+  .tool-link {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 11px; background: #0d1117;
+    border: 1px solid #1e3a5f; border-radius: 8px;
+    text-decoration: none; color: #e2e8f0;
+    font-size: 13px; margin-bottom: 7px; transition: border-color .2s;
+  }
+  .tool-link:hover { border-color: #00e5ff; color: #e2e8f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="det-hero">
+  <div class="container">
+    <div class="eyebrow">AI-Powered Detection</div>
+    <h1 class="pg-title">🏦 Bank Alert <span>Detector</span></h1>
+    <p class="pg-sub">Upload any suspicious bank credit alert screenshot. Claude AI reads the image directly and tells you if it is real or fake in seconds.</p>
+  </div>
+</div>
+
+<div class="det-page">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- ══ LEFT COLUMN ══ -->
+      <div class="col-lg-8">
+
+        <!-- ERROR BANNER -->
+        {% if error %}
+        <div class="error-banner">
+          <span>⚠️</span>
+          <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <!-- ══ RESULT (shows ABOVE form after submission) ══ -->
+        {% if result %}
+        <div class="result-wrap result-{{ result.risk_level }}" id="resultCard">
+          <div class="result-top rt-{{ result.risk_level }}">
+            <div class="res-icon">
+              {% if result.risk_level == 'HIGH' %}⛔
+              {% elif result.risk_level == 'MEDIUM' %}⚠️
+              {% else %}✅{% endif %}
+            </div>
+            <div>
+              <div class="res-title col-{{ result.risk_level }}">
+                {% if result.risk_level == 'HIGH' %}FAKE ALERT DETECTED
+                {% elif result.risk_level == 'MEDIUM' %}SUSPICIOUS — Verify Manually
+                {% elif result.risk_level == 'SAFE' %}LOOKS GENUINE
+                {% else %}LOW RISK — Probably Okay{% endif %}
+              </div>
+              <div style="font-size:13px;color:#64748b;margin-top:3px">
+                {% if result.bank_name and result.bank_name != 'Unknown' %}{{ result.bank_name }}{% endif %}
+                {% if result.amount and result.amount != 'Not detected' %} &nbsp;·&nbsp; {{ result.amount }}{% endif %}
+              </div>
+            </div>
+            {% if result.confidence > 0 %}
+            <div class="conf-block">
+              <div class="conf-big col-{{ result.risk_level }}">{{ result.confidence }}%</div>
+              <div class="conf-lbl">Confidence</div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="result-body">
+            <!-- Confidence bar -->
+            {% if result.confidence > 0 %}
+            <div class="cbar-track">
+              <div class="cbar-fill" style="width:{{ result.confidence }}%;background:{% if result.risk_level == 'HIGH' %}#ff3d71{% elif result.risk_level == 'MEDIUM' %}#ffd600{% else %}#00c853{% endif %}"></div>
+            </div>
+            {% endif %}
+
+            <!-- Meta pills -->
+            <div class="meta-pills">
+              {% if result.bank_name and result.bank_name != 'Unknown' %}
+              <div class="mpill">🏦 <strong>{{ result.bank_name }}</strong></div>
+              {% endif %}
+              {% if result.amount and result.amount != 'Not detected' %}
+              <div class="mpill">💰 <strong>{{ result.amount }}</strong></div>
+              {% endif %}
+              {% if result.is_fake %}
+              <div class="mpill">🚫 <strong style="color:#ff3d71">Likely Fake</strong></div>
+              {% else %}
+              <div class="mpill">✅ <strong style="color:#00c853">No clear tampering found</strong></div>
+              {% endif %}
+            </div>
+
+            <!-- Reasons -->
+            {% if result.reasons %}
+            <div class="sec-label">🔍 What the AI Found</div>
+            <div style="margin-bottom:16px">
+              {% for reason in result.reasons %}
+              <div class="reason-row">
+                <span class="reason-dot">{% if result.risk_level == 'HIGH' %}🔴{% elif result.risk_level == 'MEDIUM' %}🟡{% else %}🟢{% endif %}</span>
+                <span>{{ reason }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- AI Explanation -->
+            {% if result.explanation %}
+            <div class="ai-box">
+              <div class="ai-lbl">🤖 AI Explanation</div>
+              <div class="ai-txt">{{ result.explanation }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Advice -->
+            {% if result.advice %}
+            <div class="advice-box adv-{{ result.risk_level }}">
+              <strong>💡 What to do:</strong> {{ result.advice }}
+            </div>
+            {% endif %}
+
+            <!-- OCR text toggle -->
+            {% if result.ocr_text %}
+            <details style="margin-top:14px">
+              <summary style="font-size:12px;color:#64748b;cursor:pointer;user-select:none;">📝 View extracted text (OCR)</summary>
+              <div class="ocr-pre">{{ result.ocr_text }}</div>
+            </details>
+            {% endif %}
+
+          </div>
+        </div><!-- /result-wrap -->
+        {% endif %}
+
+        <!-- ══ UPLOAD FORM ══ -->
+        <div class="card-dark">
+          <div class="card-head">
+            <span style="font-size:22px">📸</span>
+            <div>
+              <h4>Upload Bank Alert Screenshot</h4>
+              <p>JPEG · PNG · WebP · Max 5 MB</p>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <form method="POST"
+                  enctype="multipart/form-data"
+                  id="alertForm"
+                  action="">
+              {% csrf_token %}
+
+              <!-- DROP ZONE -->
+              <div class="upload-zone" id="dropZone">
+                <span class="uz-icon" id="uzIcon">📂</span>
+                <div class="uz-title" id="uzTitle">Drop screenshot here or click to browse</div>
+                <div class="uz-sub"  id="uzSub">Upload the bank credit alert you received</div>
+                <!-- IMPORTANT: name="image" must match views.py request.FILES.get('image') -->
+                <input type="file"
+                       name="image"
+                       id="imageInput"
+                       accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                       required>
+              </div>
+
+              <!-- PREVIEW -->
+              <div id="previewBox" style="display:none; margin-top:14px; background:#0d1117; border:1px solid #1e3a5f; border-radius:10px; padding:12px; align-items:center; gap:12px;">
+                <img id="previewImg" src="" alt="preview" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #1e3a5f;flex-shrink:0;">
+                <div style="flex:1;min-width:0">
+                  <div id="previewName" style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                  <div id="previewSize" style="font-size:12px;color:#64748b;margin-top:2px"></div>
+                  <div style="color:#00c853;font-size:12px;margin-top:3px">✅ Ready to analyze</div>
+                </div>
+              </div>
+
+              <!-- STATE SELECT -->
+              <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                  <label class="field-label">Your State (optional)</label>
+                  <select name="state" class="sel-dark form-select">
+                    <option value="other">-- Select State --</option>
+                    {% for val, label in nigerian_states %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- SUBMIT -->
+              <div class="mt-4">
+                <button type="submit" class="btn-analyze" id="analyzeBtn">
+                  🔍 Analyze This Alert
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+      </div><!-- /col-lg-8 -->
+
+      <!-- ══ RIGHT SIDEBAR ══ -->
+      <div class="col-lg-4">
+
+        <div class="scard" style="border-color:rgba(0,229,255,.2)">
+          <h6 style="color:#00e5ff">⚙️ How It Works</h6>
+          <div class="step-row">
+            <div class="step-n">1</div>
+            <div class="step-t"><strong>Upload Screenshot</strong>Any bank credit alert image</div>
+          </div>
+          <div class="step-row">
+            <div class="step-n">2</div>
+            <div class="step-t"><strong>Claude Vision Reads It</strong>AI examines every detail directly</div>
+          </div>
+          <div class="step-row">
+            <div class="step-n">3</div>
+            <div class="step-t"><strong>Instant Verdict</strong>Real or fake, with clear reasons</div>
+          </div>
+        </div>
+
+        <div class="scard" style="border-color:rgba(255,61,113,.3)">
+          <h6 style="color:#ff3d71">🚩 Signs of a Fake Alert</h6>
+          <ul class="slist">
+            <li>🔴 Sender name doesn't match bank</li>
+            <li>🔴 Wrong logo, font, or colors</li>
+            <li>🔴 Misspelled words ("Creditted")</li>
+            <li>🔴 Missing transaction reference</li>
+            <li>🔴 Unusual amount formatting</li>
+            <li>🔴 Screenshot looks edited/cut</li>
+            <li>🔴 Pressure language ("Act NOW")</li>
+          </ul>
+        </div>
+
+        <div class="scard" style="background:rgba(255,214,0,.04);border-color:rgba(255,214,0,.2)">
+          <h6 style="color:#ffd600">⚠️ Golden Rule</h6>
+          <p style="font-size:13px;color:#64748b;line-height:1.7;margin:0 0 12px">
+            <strong style="color:#e2e8f0">NEVER accept a screenshot as proof of payment.</strong>
+            Always verify in your bank app or USSD before releasing goods.
+          </p>
+          <div style="font-size:12px;color:#64748b;line-height:2">
+            <strong style="color:#ffd600">GTBank:</strong> *737*6*1# &nbsp;
+            <strong style="color:#ffd600">Zenith:</strong> *966*00# &nbsp;
+            <strong style="color:#ffd600">Access:</strong> *901*5# <br>
+            <strong style="color:#ffd600">First Bank:</strong> *894*00# &nbsp;
+            <strong style="color:#ffd600">UBA:</strong> *919*00#
+          </div>
+        </div>
+
+        <div class="scard">
+          <h6>🔗 Other Scan Tools</h6>
+          <a href="{% url 'whatsapp_scanner' %}" class="tool-link">💬 Scan WhatsApp Message</a>
+          <a href="{% url 'link_scanner' %}"     class="tool-link">🔗 Check Suspicious Link</a>
+        </div>
+
+      </div>
+
+    </div><!-- /row -->
+  </div><!-- /container -->
+</div><!-- /det-page -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Image preview ─────────────────────────────────────────────
+document.getElementById('imageInput').addEventListener('change', function() {
+  showPreview(this.files[0]);
+});
+
+function showPreview(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewName').textContent = file.name;
+    document.getElementById('previewSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    document.getElementById('previewBox').style.display = 'flex';
+    document.getElementById('uzIcon').textContent  = '✅';
+    document.getElementById('uzTitle').textContent = 'Image selected — ready to analyze';
+    document.getElementById('uzSub').textContent   = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Drag and drop ─────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  // Assign to the file input so it gets submitted with the form
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  document.getElementById('imageInput').files = dt.files;
+  showPreview(file);
+});
+
+// ── Loading state on submit ───────────────────────────────────
+document.getElementById('alertForm').addEventListener('submit', function(e) {
+  const input = document.getElementById('imageInput');
+
+  // Guard: make sure a file is actually selected
+  if (!input.files || input.files.length === 0) {
+    e.preventDefault();
+    alert('Please select an image file first.');
+    return;
+  }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:16px;height:16px;border-width:2px"></span> Analyzing image with AI...';
+  btn.disabled = true;
+});
+
+// ── Auto-scroll to result on page load ───────────────────────
+{% if result %}
+window.addEventListener('load', function() {
+  const card = document.getElementById('resultCard');
+  if (card) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+});
+{% endif %}
+</script>
+{% endblock %}

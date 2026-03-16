@@ -1,0 +1,238 @@
+{% extends 'base/base.html' %}
+{% block title %}Phishing Link Scanner — ScamShield{% endblock %}
+
+{% block extra_css %}
+<style>
+  .url-input-wrap {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 28px;
+  }
+  .url-field {
+    background: #0d1117!important;
+    border: 1px solid #1e3a5f!important;
+    color: #e2e8f0!important;
+    border-radius: 10px!important;
+    padding: 14px 18px!important;
+    font-size: 15px!important;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.2s!important;
+  }
+  .url-field:focus {
+    border-color: #00e5ff!important;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.1)!important;
+  }
+  .result-card {
+    border-radius: 14px;
+    padding: 28px;
+    margin-top: 24px;
+  }
+  .result-HIGH   { background: rgba(255,61,113,0.08); border: 1px solid rgba(255,61,113,0.4); }
+  .result-MEDIUM { background: rgba(255,214,0,0.08);  border: 1px solid rgba(255,214,0,0.4); }
+  .result-LOW    { background: rgba(0,200,83,0.08);   border: 1px solid rgba(0,200,83,0.4); }
+  .result-SAFE   { background: rgba(0,200,83,0.08);   border: 1px solid rgba(0,200,83,0.5); }
+  .result-title { font-size: 22px; font-weight: 900; margin-bottom: 14px; }
+  .reason-item { display: flex; gap: 8px; margin-bottom: 8px; font-size: 14px; }
+  .conf-track { background: #1e3a5f; height: 10px; border-radius: 5px; overflow: hidden; }
+  .redirect-box {
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: monospace;
+    font-size: 13px;
+    word-break: break-all;
+    margin-top: 12px;
+  }
+  .threat-badge {
+    display: inline-block;
+    font-size: 12px; font-weight: 800;
+    padding: 3px 12px; border-radius: 4px; margin-bottom: 14px;
+  }
+  .example-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .example-link-btn {
+    background: #0d1117; border: 1px solid #1e3a5f;
+    border-radius: 6px; padding: 6px 12px; font-size: 12px;
+    color: #64748b; cursor: pointer; transition: all 0.2s;
+    font-family: monospace;
+  }
+  .example-link-btn:hover { border-color: #00e5ff; color: #00e5ff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Header -->
+      <div class="text-center mb-4">
+        <h1 class="fw-bold" style="font-size:38px; letter-spacing:-1px">
+          🔗 Phishing Link <span style="color:#00e5ff">Scanner</span>
+        </h1>
+        <p class="text-white">Paste any suspicious URL — we check it against Google Safe Browsing, Nigerian bank lookalikes, and AI analysis instantly.</p>
+      </div>
+
+      <!-- SCAN FORM -->
+      <div class="url-input-wrap">
+        <form method="POST" id="linkForm">
+          {% csrf_token %}
+          <label class="form-label fw-bold mb-2" style="font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#64748b">
+            🌐 URL to Scan
+          </label>
+          <input
+            type="text"
+            name="url"
+            id="urlInput"
+            class="form-control url-field mb-3"
+            placeholder="https://bit.ly/gtbank-verify  or  paste any link"
+            value="{{ url }}"
+            required
+            autocomplete="off"
+          >
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#64748b">Your State</label>
+            <select name="state" class="form-select" style="background:#0d1117;border:1px solid #1e3a5f;color:#e2e8f0;border-radius:8px;padding:10px 14px">
+              <option value="other">-- Select State (optional) --</option>
+              {% for val, label in nigerian_states %}
+              <option value="{{ val }}" {% if state == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-100" id="scanBtn">
+            🔍 Scan This Link
+          </button>
+        </form>
+
+        <!-- Example URLs to try -->
+        <div class="mt-3">
+          <div style="font-size:12px; color:#475569; margin-bottom:6px">Try these examples:</div>
+          <div class="example-links">
+            <button class="example-link-btn" onclick="setUrl('http://gtbank-secure-login.xyz/verify')">gtbank-secure-login.xyz</button>
+            <button class="example-link-btn" onclick="setUrl('https://bit.ly/zenith-update')">bit.ly/zenith-update</button>
+            <button class="example-link-btn" onclick="setUrl('https://192.168.0.1/bank-login')">IP-based URL</button>
+            <button class="example-link-btn" onclick="setUrl('https://zenithbank.com')">zenithbank.com (safe)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      {% if result %}
+      <div class="result-card result-{{ result.risk_level }}">
+
+        <!-- Threat badge -->
+        {% if result.threat_type %}
+        <span class="threat-badge"
+          style="{% if result.risk_level == 'HIGH' %}background:rgba(255,61,113,0.2);color:#ff3d71;border:1px solid #ff3d71
+                 {% elif result.risk_level == 'MEDIUM' %}background:rgba(255,214,0,0.2);color:#ffd600;border:1px solid #ffd600
+                 {% else %}background:rgba(0,200,83,0.2);color:#00c853;border:1px solid #00c853{% endif %}">
+          {{ result.threat_type }}
+        </span>
+        {% endif %}
+
+        <!-- Risk title -->
+        <div class="result-title"
+          style="color:{% if result.risk_level == 'HIGH' %}#ff3d71{% elif result.risk_level == 'MEDIUM' %}#ffd600{% elif result.risk_level == 'SAFE' %}#00c853{% else %}#00c853{% endif %}">
+          {% if result.risk_level == 'HIGH' %}⛔ HIGH RISK — Do NOT Visit
+          {% elif result.risk_level == 'MEDIUM' %}⚠️ MEDIUM RISK — Proceed With Caution
+          {% elif result.risk_level == 'LOW' %}🟡 LOW RISK — Looks Mostly Safe
+          {% else %}✅ SAFE — No Threats Detected{% endif %}
+        </div>
+
+        <!-- Confidence bar -->
+        <div class="d-flex justify-content-between mb-1">
+          <span style="font-size:13px; color:#64748b">Confidence</span>
+          <span style="font-size:13px; font-weight:700">{{ result.confidence }}%</span>
+        </div>
+        <div class="conf-track mb-3">
+          <div style="width:{{ result.confidence }}%; height:100%; border-radius:5px;
+            background:{% if result.risk_level == 'HIGH' %}#ff3d71{% elif result.risk_level == 'MEDIUM' %}#ffd600{% else %}#00c853{% endif %}">
+          </div>
+        </div>
+
+        <!-- Reasons -->
+        {% if result.reasons %}
+        <h6 class="fw-bold mb-2" style="font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#64748b">Reasons Detected</h6>
+        {% for reason in result.reasons %}
+        <div class="reason-item">
+          <span style="color:{% if result.risk_level == 'HIGH' %}#ff3d71{% else %}#ffd600{% endif %}; flex-shrink:0">•</span>
+          <span>{{ reason }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Redirect info -->
+        {% if result.is_shortener and result.final_url %}
+        <div style="margin-top:14px">
+          <div style="font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px">Resolves To</div>
+          <div class="redirect-box">{{ result.final_url }}</div>
+        </div>
+        {% endif %}
+
+        <!-- AI explanation -->
+        {% if result.explanation %}
+        <div class="mt-3 p-3" style="background:rgba(0,0,0,0.2); border-radius:8px; border-left:3px solid #00e5ff">
+          <div style="font-size:12px; color:#00e5ff; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px">
+            🤖 AI Analysis
+          </div>
+          <p style="font-size:14px; margin:0; color:#94a3b8">{{ result.explanation }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Advice -->
+        {% if result.advice %}
+        <div class="alert mt-3 mb-0"
+          style="{% if result.risk_level == 'HIGH' %}background:rgba(255,61,113,0.1); border:1px solid rgba(255,61,113,0.3); color:#e2e8f0
+                 {% else %}background:rgba(255,214,0,0.1); border:1px solid rgba(255,214,0,0.3); color:#e2e8f0{% endif %}">
+          <strong>💡 What to do:</strong> {{ result.advice }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endif %}
+
+      <!-- HOW IT WORKS INFO STRIP -->
+      <div class="row g-3 mt-4">
+        <div class="col-md-4">
+          <div style="background:#111827; border:1px solid #1e3a5f; border-radius:10px; padding:16px; text-align:center">
+            <div style="font-size:28px; margin-bottom:8px">🔍</div>
+            <div style="font-size:13px; font-weight:700; margin-bottom:4px">Rule Analysis</div>
+            <div style="font-size:12px; color:#64748b">20+ heuristic checks for Nigerian bank lookalikes, suspicious TLDs and IP addresses</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="background:#111827; border:1px solid #1e3a5f; border-radius:10px; padding:16px; text-align:center">
+            <div style="font-size:28px; margin-bottom:8px">🛡️</div>
+            <div style="font-size:13px; font-weight:700; margin-bottom:4px">Google Safe Browsing</div>
+            <div style="font-size:12px; color:#64748b">Cross-referenced against Google's global database of known phishing & malware URLs</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="background:#111827; border:1px solid #1e3a5f; border-radius:10px; padding:16px; text-align:center">
+            <div style="font-size:28px; margin-bottom:8px">🤖</div>
+            <div style="font-size:13px; font-weight:700; margin-bottom:4px">AI Explanation</div>
+            <div style="font-size:12px; color:#64748b">Claude AI explains exactly why a link is dangerous in plain everyday language</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function setUrl(url) {
+    document.getElementById('urlInput').value = url;
+    document.getElementById('urlInput').focus();
+  }
+
+  document.getElementById('linkForm').addEventListener('submit', function() {
+    const btn = document.getElementById('scanBtn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Scanning...';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}

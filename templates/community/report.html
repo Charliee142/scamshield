@@ -1,0 +1,673 @@
+{% extends 'base/base.html' %}
+{% block title %}Report a Scammer — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── PAGE SHELL ── */
+  .report-page {
+    background: #0a0e1a;
+    min-height: 100vh;
+    padding: 40px 0 80px;
+  }
+
+  /* ── HEADER STRIP ── */
+  .page-hero {
+    background: linear-gradient(135deg, #111827 0%, #0d1117 100%);
+    border-bottom: 1px solid #1e3a5f;
+    padding: 40px 0 32px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,61,113,0.07) 0%, transparent 70%);
+  }
+  .page-hero-eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #ff3d71;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .page-hero-title {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .page-hero-title span { color: #00e5ff; }
+  .page-hero-sub { color: #64748b; font-size: 15px; max-width: 520px; }
+
+  /* ── IMPACT COUNTER PILLS ── */
+  .impact-pills { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .impact-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+  .impact-pill strong { color: #00e5ff; }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .form-card-header {
+    background: #0d1117;
+    padding: 20px 28px;
+    border-bottom: 1px solid #1e3a5f;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .form-card-header h4 { margin: 0; font-size: 17px; font-weight: 800; }
+  .form-card-body { padding: 28px; }
+
+  /* ── FORM INPUTS ── */
+  .form-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  .form-control, .form-select {
+    background: #0d1117 !important;
+    border: 1px solid #1e3a5f !important;
+    color: #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+    transition: border-color 0.2s !important;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #00e5ff !important;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.1) !important;
+    background: #0d1117 !important;
+  }
+  .form-control::placeholder { color: #475569 !important; }
+  .form-control.is-invalid { border-color: #ff3d71 !important; }
+  .invalid-feedback { color: #ff3d71; font-size: 12px; }
+  .form-text { color: #475569 !important; font-size: 12px; }
+
+  /* ── SCAM TYPE SELECTOR ── */
+  .scam-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .scam-type-btn {
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: left;
+    width: 100%;
+  }
+  .scam-type-btn:hover { border-color: #00e5ff; color: #e2e8f0; }
+  .scam-type-btn.selected {
+    border-color: #00e5ff;
+    background: rgba(0,229,255,0.08);
+    color: #00e5ff;
+    font-weight: 700;
+  }
+  .scam-type-btn .btn-icon { font-size: 20px; flex-shrink: 0; }
+
+  /* ── FILE UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed #1e3a5f;
+    border-radius: 10px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #00e5ff;
+    background: rgba(0,229,255,0.04);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-zone .upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-preview { display: none; }
+  .upload-preview img { max-height: 160px; border-radius: 8px; }
+
+  /* ── DIVIDER ── */
+  .form-divider {
+    border: none;
+    border-top: 1px solid #1e3a5f;
+    margin: 24px 0;
+  }
+
+  /* ── SUBMIT BUTTON ── */
+  .btn-submit {
+    background: #ff3d71;
+    color: #fff;
+    font-weight: 800;
+    border: none;
+    padding: 15px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    width: 100%;
+    transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(255,61,113,0.25);
+  }
+  .btn-submit:hover {
+    background: #e0355e;
+    box-shadow: 0 0 32px rgba(255,61,113,0.4);
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  /* ── SIDEBAR INFO CARDS ── */
+  .info-card {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .info-card h6 { font-size: 14px; font-weight: 800; margin-bottom: 12px; }
+  .info-list { list-style: none; padding: 0; margin: 0; }
+  .info-list li {
+    font-size: 13px;
+    color: #64748b;
+    padding: 6px 0;
+    border-bottom: 1px solid #1e3a5f;
+    display: flex;
+    gap: 8px;
+  }
+  .info-list li:last-child { border-bottom: none; }
+  .info-list li .li-icon { flex-shrink: 0; }
+
+  /* ── SUCCESS BANNER ── */
+  .success-banner {
+    background: rgba(0,200,83,0.1);
+    border: 1px solid rgba(0,200,83,0.35);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    animation: slideDown 0.4s ease;
+  }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-12px) } to { opacity:1; transform:translateY(0) } }
+  .success-banner .s-icon { font-size: 28px; flex-shrink: 0; }
+  .success-banner h5 { color: #00c853; font-weight: 800; margin-bottom: 4px; }
+  .success-banner p { color: #64748b; font-size: 13px; margin: 0; }
+
+  /* ── WARNING NOTE ── */
+  .privacy-note {
+    background: rgba(255,214,0,0.07);
+    border: 1px solid rgba(255,214,0,0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 16px;
+  }
+  .privacy-note strong { color: #ffd600; }
+
+  @media (max-width: 768px) {
+    .scam-type-grid { grid-template-columns: 1fr; }
+    .page-hero-title { font-size: 28px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HERO ── -->
+<div class="page-hero">
+  <div class="container">
+    <div class="page-hero-eyebrow">Community Intelligence</div>
+    <h1 class="page-hero-title">Report a <span>Scammer</span></h1>
+    <p class="page-hero-sub">
+      Every report you submit helps protect thousands of other Nigerians.
+      Your information is anonymized and added to our community intelligence database.
+    </p>
+    <div class="impact-pills">
+      <div class="impact-pill"><strong>{{ total_reports|default:"0" }}+</strong> scams reported</div>
+      <div class="impact-pill">🔒 Anonymous submission</div>
+      <div class="impact-pill">⚡ Instantly added to database</div>
+    </div>
+  </div>
+</div>
+
+<div class="report-page">
+  <div class="container">
+
+    <!-- ── SUCCESS MESSAGE ── -->
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="success-banner">
+        <div class="s-icon">✅</div>
+        <div>
+          <h5>Report Submitted Successfully!</h5>
+          <p>{{ msg }} Our AI will analyze the pattern and update the scam database.</p>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+
+      <!-- ── LEFT: REPORT FORM ── -->
+      <div class="col-lg-8">
+        <form method="POST" enctype="multipart/form-data" id="reportForm" novalidate>
+          {% csrf_token %}
+          <!-- Hidden field for selected scam type -->
+          <input type="hidden" name="scam_type" id="scamTypeInput" value="">
+
+          <!-- ────────────────────────────────────────
+               SECTION 1: SCAM TYPE
+          ──────────────────────────────────────── -->
+          <div class="form-card mb-4">
+            <div class="form-card-header">
+              <span style="font-size:22px">🎯</span>
+              <div>
+                <h4>Step 1 — Select Scam Type</h4>
+                <div style="font-size:13px; color:#64748b">What kind of scam are you reporting?</div>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <div class="scam-type-grid" id="scamTypeGrid">
+                <button type="button" class="scam-type-btn" data-value="bank_impersonation">
+                  <span class="btn-icon">🏦</span>
+                  <span>Bank Impersonation</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="fake_alert">
+                  <span class="btn-icon">💸</span>
+                  <span>Fake Bank Alert</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="investment">
+                  <span class="btn-icon">📈</span>
+                  <span>Investment Fraud</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="crypto">
+                  <span class="btn-icon">🪙</span>
+                  <span>Crypto Scam</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="job_scam">
+                  <span class="btn-icon">💼</span>
+                  <span>Fake Job Offer</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="lottery">
+                  <span class="btn-icon">🎰</span>
+                  <span>Lottery / Prize Scam</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="romance">
+                  <span class="btn-icon">💔</span>
+                  <span>Romance Scam</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="phishing">
+                  <span class="btn-icon">🔗</span>
+                  <span>Phishing Link</span>
+                </button>
+                <button type="button" class="scam-type-btn" data-value="other">
+                  <span class="btn-icon">❓</span>
+                  <span>Other</span>
+                </button>
+              </div>
+              <div id="scamTypeError" class="invalid-feedback" style="display:none; margin-top:8px">
+                Please select a scam type to continue.
+              </div>
+            </div>
+          </div>
+
+          <!-- ────────────────────────────────────────
+               SECTION 2: SCAMMER DETAILS
+          ──────────────────────────────────────── -->
+          <div class="form-card mb-4">
+            <div class="form-card-header">
+              <span style="font-size:22px">📋</span>
+              <div>
+                <h4>Step 2 — Scammer Details</h4>
+                <div style="font-size:13px; color:#64748b">Fill in what you know — all fields are optional except description</div>
+              </div>
+            </div>
+            <div class="form-card-body">
+
+              <div class="row g-3">
+                <!-- Phone Number -->
+                <div class="col-md-6">
+                  <label class="form-label">📱 Scammer's Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone_number"
+                    class="form-control"
+                    placeholder="e.g. 08012345678"
+                    maxlength="15"
+                    value="{{ request.POST.phone_number|default:'' }}"
+                  >
+                  <div class="form-text">Nigerian number — will be searchable by other users</div>
+                </div>
+
+                <!-- State -->
+                <div class="col-md-6">
+                  <label class="form-label">📍 State Where Scam Occurred</label>
+                  <select name="state" class="form-select" required>
+                    <option value="" disabled {% if not request.POST.state %}selected{% endif %}>-- Select State --</option>
+                    {% for val, label in nigerian_states %}
+                    <option value="{{ val }}" {% if request.POST.state == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Bank Account Number -->
+                <div class="col-md-6">
+                  <label class="form-label">🏦 Scammer's Bank Account (optional)</label>
+                  <input
+                    type="text"
+                    name="account_number"
+                    class="form-control"
+                    placeholder="10-digit NUBAN account number"
+                    maxlength="20"
+                    value="{{ request.POST.account_number|default:'' }}"
+                  >
+                </div>
+
+                <!-- Bank Name -->
+                <div class="col-md-6">
+                  <label class="form-label">🏛️ Bank Name (optional)</label>
+                  <select name="bank_name" class="form-select">
+                    <option value="">-- Select Bank --</option>
+                    <option value="Access Bank">Access Bank</option>
+                    <option value="GTBank">GTBank (Guaranty Trust)</option>
+                    <option value="Zenith Bank">Zenith Bank</option>
+                    <option value="First Bank">First Bank</option>
+                    <option value="UBA">United Bank for Africa (UBA)</option>
+                    <option value="Union Bank">Union Bank</option>
+                    <option value="FCMB">FCMB</option>
+                    <option value="Fidelity Bank">Fidelity Bank</option>
+                    <option value="Stanbic IBTC">Stanbic IBTC</option>
+                    <option value="Polaris Bank">Polaris Bank</option>
+                    <option value="Sterling Bank">Sterling Bank</option>
+                    <option value="Wema Bank">Wema Bank</option>
+                    <option value="Ecobank">Ecobank</option>
+                    <option value="Heritage Bank">Heritage Bank</option>
+                    <option value="Keystone Bank">Keystone Bank</option>
+                    <option value="Opay">OPay</option>
+                    <option value="Palmpay">PalmPay</option>
+                    <option value="Kuda">Kuda Bank</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <hr class="form-divider">
+
+              <!-- Description -->
+              <div class="mb-3">
+                <label class="form-label">📝 Describe What Happened <span style="color:#ff3d71">*</span></label>
+                <textarea
+                  name="description"
+                  class="form-control"
+                  rows="5"
+                  placeholder="Describe the scam in detail. What did they say? What did they ask you to do? How did they contact you? The more detail, the more people you protect."
+                  required
+                  minlength="30"
+                >{{ request.POST.description|default:'' }}</textarea>
+                <div class="form-text">Minimum 30 characters. Do NOT include your own personal information.</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ────────────────────────────────────────
+               SECTION 3: SCREENSHOT UPLOAD
+          ──────────────────────────────────────── -->
+          <div class="form-card mb-4">
+            <div class="form-card-header">
+              <span style="font-size:22px">📸</span>
+              <div>
+                <h4>Step 3 — Upload Screenshot (Optional)</h4>
+                <div style="font-size:13px; color:#64748b">A screenshot of the scam message or fake alert is very helpful</div>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <div class="upload-zone" id="uploadZone">
+                <input
+                  type="file"
+                  name="screenshot"
+                  id="screenshotInput"
+                  accept="image/*"
+                >
+                <div class="upload-preview" id="uploadPreview">
+                  <img id="previewImg" src="" alt="Preview">
+                  <p id="previewName" style="font-size:13px; color:#64748b; margin-top:8px"></p>
+                </div>
+                <div id="uploadPlaceholder">
+                  <div class="upload-icon">🖼️</div>
+                  <p style="font-size:14px; color:#94a3b8; margin-bottom:4px">Click to upload or drag & drop</p>
+                  <p style="font-size:12px; color:#475569">JPG, PNG — Max 5MB</p>
+                </div>
+              </div>
+
+              <div class="privacy-note mt-3">
+                <strong>⚠️ Privacy Reminder:</strong> Before uploading, blur or cover any
+                personal information (your name, account number, phone number) visible in the screenshot.
+                Only the scammer's details should be visible.
+              </div>
+            </div>
+          </div>
+
+          <!-- ────────────────────────────────────────
+               SUBMIT
+          ──────────────────────────────────────── -->
+          <button type="submit" class="btn-submit" id="submitBtn">
+            🚨 Submit Scam Report
+          </button>
+
+          <div class="privacy-note mt-3">
+            <strong>🔒 Your Privacy:</strong> Your IP address is not stored with this report.
+            All submissions are anonymous. By submitting, you confirm this report is truthful
+            to the best of your knowledge.
+          </div>
+
+        </form>
+      </div>
+
+      <!-- ── RIGHT: SIDEBAR ── -->
+      <div class="col-lg-4">
+
+        <!-- Why Report? -->
+        <div class="info-card">
+          <h6 style="color:#00c853">✅ Why Your Report Matters</h6>
+          <ul class="info-list">
+            <li><span class="li-icon">🛡️</span> Warns other Nigerians before they're scammed</li>
+            <li><span class="li-icon">🧠</span> Trains our AI to detect new scam patterns</li>
+            <li><span class="li-icon">🗺️</span> Updates the national scam intelligence map</li>
+            <li><span class="li-icon">📞</span> Makes the phone number searchable by others</li>
+            <li><span class="li-icon">📊</span> Helps identify scam hotspots across Nigeria</li>
+          </ul>
+        </div>
+
+        <!-- What to Include -->
+        <div class="info-card">
+          <h6 style="color:#ffd600">📋 What Makes a Good Report</h6>
+          <ul class="info-list">
+            <li><span class="li-icon">✔️</span> The scammer's phone number</li>
+            <li><span class="li-icon">✔️</span> Exactly what they said / promised</li>
+            <li><span class="li-icon">✔️</span> How they contacted you (WhatsApp, SMS, call)</li>
+            <li><span class="li-icon">✔️</span> Screenshot with your personal details blurred</li>
+            <li><span class="li-icon">✔️</span> The state / location where it happened</li>
+          </ul>
+        </div>
+
+        <!-- Common Scam Warning Signs -->
+        <div class="info-card">
+          <h6 style="color:#ff3d71">⚠️ Common Warning Signs</h6>
+          <ul class="info-list">
+            <li><span class="li-icon">🚩</span> "Send small fee to receive big prize"</li>
+            <li><span class="li-icon">🚩</span> Unsolicited "credit alert" screenshots</li>
+            <li><span class="li-icon">🚩</span> Urgency: "act within 1 hour or lose access"</li>
+            <li><span class="li-icon">🚩</span> Requests for OTP, PIN, or BVN</li>
+            <li><span class="li-icon">🚩</span> Promises of 100%+ investment returns</li>
+          </ul>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="info-card" style="border-color: rgba(255,61,113,0.4)">
+          <h6 style="color:#ff3d71">🚨 Report to Authorities Too</h6>
+          <p style="font-size:13px; color:#64748b; margin-bottom:12px">
+            For financial crimes, also report to official channels:
+          </p>
+          <ul class="info-list">
+            <li><span class="li-icon">🏛️</span> EFCC — <strong style="color:#e2e8f0">efcc.gov.ng</strong></li>
+            <li><span class="li-icon">🏛️</span> NITDA — <strong style="color:#e2e8f0">nitda.gov.ng</strong></li>
+            <li><span class="li-icon">📞</span> EFCC Hotline: <strong style="color:#e2e8f0">0800-326-6722</strong></li>
+          </ul>
+        </div>
+
+        <!-- Quick Lookup -->
+        <div class="info-card" style="background: rgba(0,229,255,0.04); border-color: rgba(0,229,255,0.2)">
+          <h6 style="color:#00e5ff">🔍 Check Before You Act</h6>
+          <p style="font-size:13px; color:#64748b; margin-bottom:12px">
+            Received a suspicious message? Check the number first.
+          </p>
+          <a href="{% url 'phone_lookup' %}" class="btn btn-sm w-100"
+             style="background:rgba(0,229,255,0.1); color:#00e5ff; border:1px solid rgba(0,229,255,0.3); font-size:13px; padding:10px">
+            📞 Lookup a Phone Number
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── SCAM TYPE SELECTOR ──
+  const scamTypeBtns = document.querySelectorAll('.scam-type-btn');
+  const scamTypeInput = document.getElementById('scamTypeInput');
+  const scamTypeError = document.getElementById('scamTypeError');
+
+  scamTypeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      scamTypeBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      scamTypeInput.value = btn.dataset.value;
+      scamTypeError.style.display = 'none';
+    });
+  });
+
+  // ── IMAGE PREVIEW ──
+  const screenshotInput = document.getElementById('screenshotInput');
+  const uploadPreview   = document.getElementById('uploadPreview');
+  const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+  const previewImg      = document.getElementById('previewImg');
+  const previewName     = document.getElementById('previewName');
+  const uploadZone      = document.getElementById('uploadZone');
+
+  screenshotInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File is too large. Please upload an image under 5MB.');
+      this.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImg.src = e.target.result;
+      previewName.textContent = file.name;
+      uploadPreview.style.display = 'block';
+      uploadPlaceholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Drag & drop visual cue
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      screenshotInput.files = e.dataTransfer.files;
+      screenshotInput.dispatchEvent(new Event('change'));
+    }
+  });
+
+  // ── FORM VALIDATION ──
+  document.getElementById('reportForm').addEventListener('submit', function (e) {
+    let valid = true;
+
+    // Must select scam type
+    if (!scamTypeInput.value) {
+      scamTypeError.style.display = 'block';
+      document.getElementById('scamTypeGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      valid = false;
+    }
+
+    // Description must be filled
+    const desc = document.querySelector('textarea[name="description"]');
+    if (!desc.value.trim() || desc.value.trim().length < 30) {
+      desc.classList.add('is-invalid');
+      valid = false;
+    } else {
+      desc.classList.remove('is-invalid');
+    }
+
+    // State must be selected
+    const stateSelect = document.querySelector('select[name="state"]');
+    if (!stateSelect.value) {
+      stateSelect.classList.add('is-invalid');
+      valid = false;
+    } else {
+      stateSelect.classList.remove('is-invalid');
+    }
+
+    if (!valid) {
+      e.preventDefault();
+      return;
+    }
+
+    // Show loading state on button
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = '⏳ Submitting Report...';
+    btn.disabled = true;
+  });
+
+  // Live description counter
+  const descField = document.querySelector('textarea[name="description"]');
+  if (descField) {
+    descField.addEventListener('input', function () {
+      if (this.value.trim().length >= 30) this.classList.remove('is-invalid');
+    });
+  }
+</script>
+{% endblock %}

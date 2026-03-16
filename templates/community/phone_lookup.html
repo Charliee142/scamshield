@@ -1,0 +1,529 @@
+{% extends 'base/base.html' %}
+{% block title %}Phone Number Lookup — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080c14;
+  --s1:      #0f1623;
+  --s2:      #141d2e;
+  --s3:      #1a2540;
+  --border:  #1e3a5f;
+  --border2: #243554;
+  --cyan:    #00e5ff;
+  --c10:     rgba(0,229,255,.10);
+  --c20:     rgba(0,229,255,.20);
+  --green:   #00c853;
+  --red:     #ff3d71;
+  --gold:    #ffd600;
+  --text:    #e2e8f0;
+  --muted:   #64748b;
+  --muted2:  #475569;
+  --font:    'Sora', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+}
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); }
+
+/* ── HERO ── */
+.lk-hero {
+  background: linear-gradient(135deg, #0d1117, #111827);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 0 38px;
+  margin-bottom: 40px;
+  position: relative; overflow: hidden;
+}
+.lk-hero::before {
+  content: ''; position: absolute;
+  top: -80px; right: -60px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,229,255,.05), transparent 65%);
+}
+.lk-hero::after {
+  content: '📞'; position: absolute;
+  right: 80px; top: 50%; transform: translateY(-50%);
+  font-size: 110px; opacity: .04; pointer-events: none;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--c10); border: 1px solid var(--c20);
+  border-radius: 50px; padding: 4px 14px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 16px;
+}
+.hero-title { font-size: clamp(26px,4.5vw,40px); font-weight: 900; letter-spacing: -1.5px; margin-bottom: 10px; }
+.hero-title em { color: var(--cyan); font-style: normal; }
+.hero-sub  { color: var(--muted); font-size: 15px; max-width: 500px; line-height: 1.75; }
+
+/* ── SEARCH BOX ── */
+.search-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  margin-bottom: 28px;
+  transition: border-color .3s;
+}
+.search-card:focus-within { border-color: rgba(0,229,255,.35); }
+.sc-head {
+  background: #0d1117; padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 11px;
+}
+.sc-head h4 { margin: 0; font-size: 15px; font-weight: 800; }
+.sc-head p  { margin: 0; font-size: 12px; color: var(--muted); }
+.sc-body { padding: 22px; }
+
+.search-wrap {
+  display: flex; gap: 10px; align-items: stretch;
+}
+.search-icon-box {
+  background: #0d1117; border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 48px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  background: #0d1117 !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 12px !important;
+  padding: 13px 18px !important;
+  font-size: 15px !important;
+  font-family: var(--mono) !important;
+  letter-spacing: .5px;
+  transition: border-color .2s, box-shadow .2s !important;
+}
+.search-input:focus {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08) !important;
+  outline: none !important;
+}
+.search-input::placeholder { color: var(--muted2) !important; font-family: var(--font) !important; }
+.btn-search {
+  background: var(--cyan); color: #000;
+  font-weight: 800; border: none;
+  padding: 13px 26px; border-radius: 12px;
+  font-size: 14px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: all .2s; font-family: var(--font);
+  box-shadow: 0 0 20px rgba(0,229,255,.2);
+}
+.btn-search:hover { background: #fff; box-shadow: 0 0 32px rgba(0,229,255,.4); transform: translateY(-1px); }
+
+/* Recent searches pills */
+.recent-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; align-items: center; }
+.recent-lbl { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.recent-pill {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 50px; padding: 4px 12px;
+  font-size: 12px; color: var(--muted); font-family: var(--mono);
+  cursor: pointer; transition: all .15s; text-decoration: none;
+  display: inline-block;
+}
+.recent-pill:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ── NO RESULT (not searched yet) ── */
+.empty-state {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 16px; padding: 48px 24px;
+  text-align: center; margin-bottom: 24px;
+}
+.empty-icon { font-size: 56px; margin-bottom: 16px; opacity: .5; }
+.empty-title { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.empty-sub   { font-size: 14px; color: var(--muted2); max-width: 340px; margin: 0 auto; line-height: 1.7; }
+
+/* ── SAFE RESULT ── */
+.safe-card {
+  background: rgba(0,200,83,.06);
+  border: 1px solid rgba(0,200,83,.35);
+  border-radius: 18px; overflow: hidden;
+  margin-bottom: 24px;
+  animation: rIn .4s cubic-bezier(.16,1,.3,1);
+}
+@keyframes rIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+.safe-header {
+  background: rgba(0,200,83,.1);
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.safe-icon  { font-size: 44px; animation: pop .4s .1s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+.safe-title { font-size: 20px; font-weight: 900; color: var(--green); }
+.safe-sub   { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.safe-body  { padding: 20px 24px; }
+.safe-tip   {
+  background: rgba(0,200,83,.06); border: 1px solid rgba(0,200,83,.2);
+  border-left: 3px solid var(--green);
+  border-radius: 0 10px 10px 0; padding: 12px 16px;
+  font-size: 14px; color: #94a3b8; line-height: 1.7;
+}
+
+/* ── SCAMMER RESULT ── */
+.scammer-card {
+  background: rgba(255,61,113,.04);
+  border: 1px solid rgba(255,61,113,.45);
+  border-radius: 18px; overflow: hidden;
+  margin-bottom: 24px;
+  animation: rIn .4s cubic-bezier(.16,1,.3,1);
+}
+.scammer-header {
+  background: linear-gradient(135deg, rgba(255,61,113,.15), rgba(255,61,113,.06));
+  padding: 22px 26px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.scammer-icon  { font-size: 48px; animation: pop .4s .1s cubic-bezier(.34,1.56,.64,1) both; }
+.scammer-title { font-size: 22px; font-weight: 900; color: var(--red); }
+.scammer-sub   { font-size: 14px; color: #94a3b8; margin-top: 5px; }
+.report-badge  {
+  margin-left: auto; background: rgba(255,61,113,.15);
+  border: 1px solid rgba(255,61,113,.4);
+  border-radius: 12px; padding: 10px 18px; text-align: center;
+}
+.rb-num  { font-size: 32px; font-weight: 900; font-family: var(--mono); color: var(--red); line-height: 1; }
+.rb-lbl  { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.scammer-body { padding: 22px 26px; }
+
+/* Report items */
+.report-item {
+  background: #0d1117; border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+  margin-bottom: 12px; transition: border-color .2s;
+}
+.report-item:hover { border-color: rgba(255,61,113,.35); }
+.report-item:last-child { margin-bottom: 0; }
+.ri-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 9px; }
+.scam-type-badge {
+  background: rgba(255,61,113,.15); border: 1px solid rgba(255,61,113,.3);
+  color: var(--red); border-radius: 50px; padding: 3px 11px;
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+}
+.state-badge {
+  background: var(--s3); border: 1px solid var(--border2);
+  color: var(--muted); border-radius: 50px; padding: 3px 10px;
+  font-size: 11px; font-weight: 600;
+}
+.report-date  { font-size: 11px; color: var(--muted2); margin-left: auto; }
+.report-desc  { font-size: 14px; color: #94a3b8; line-height: 1.65; }
+
+/* Warning box */
+.warn-box {
+  background: rgba(255,214,0,.07); border: 1px solid rgba(255,214,0,.3);
+  border-radius: 12px; padding: 16px 18px; margin-top: 20px;
+  font-size: 14px; line-height: 1.65;
+}
+.warn-box strong { color: var(--gold); }
+
+/* Action row */
+.action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.act-btn {
+  flex: 1; min-width: 140px;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 16px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  cursor: pointer; text-align: center; text-decoration: none;
+  transition: all .2s; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.act-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--c10); }
+
+/* ── SIDEBAR ── */
+.scard { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.scard-title { font-size: 13px; font-weight: 800; margin-bottom: 12px; }
+.tip-list { list-style: none; padding: 0; margin: 0; }
+.tip-list li { font-size: 13px; color: var(--muted); padding: 7px 0; border-bottom: 1px solid rgba(30,58,95,.5); display: flex; gap: 8px; line-height: 1.5; }
+.tip-list li:last-child { border-bottom: none; }
+.tip-list strong { color: var(--text); }
+.tool-lnk {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: #0d1117;
+  border: 1px solid var(--border); border-radius: 9px;
+  text-decoration: none; color: var(--text);
+  font-size: 13px; margin-bottom: 8px; transition: border-color .2s;
+}
+.tool-lnk:hover { border-color: var(--cyan); color: var(--text); }
+.tool-lnk:last-child { margin-bottom: 0; }
+
+/* ── STATS ROW ── */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-box {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 14px; text-align: center;
+}
+.stat-num { font-size: 26px; font-weight: 900; font-family: var(--mono); color: var(--cyan); }
+.stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+@media (max-width: 576px) {
+  .search-wrap { flex-direction: column; }
+  .btn-search  { width: 100%; }
+  .stats-row   { grid-template-columns: 1fr 1fr; }
+  .report-date { display: none; }
+  .scammer-header { flex-direction: column; align-items: flex-start; }
+  .report-badge { margin-left: 0; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="lk-hero">
+  <div class="container">
+    <div class="eyebrow">🔍 Community Intelligence</div>
+    <h1 class="hero-title">📞 Number <em>Lookup</em></h1>
+    <p class="hero-sub">
+      Check if a phone number or account has been reported as a scammer
+      by other Nigerians in our community database.
+    </p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div style="padding: 0 0 80px">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- ══ LEFT COLUMN ══ -->
+      <div class="col-lg-8">
+
+        <!-- SEARCH CARD -->
+        <div class="search-card">
+          <div class="sc-head">
+            <span style="font-size:22px">🔍</span>
+            <div>
+              <h4>Search Scammer Database</h4>
+              <p>Phone numbers, account numbers reported by Nigerians</p>
+            </div>
+          </div>
+          <div class="sc-body">
+            <form method="GET" id="lookupForm">
+              <div class="search-wrap">
+                <input
+                  type="text"
+                  name="q"
+                  class="search-input form-control"
+                  placeholder="08012345678 or 0123456789 (account number)"
+                  value="{{ request.GET.q }}"
+                  id="searchInput"
+                  autocomplete="off"
+                >
+                <button type="submit" class="btn-search">🔍 Search</button>
+              </div>
+            </form>
+
+            <!-- Recent / example searches -->
+            <div class="recent-row">
+              <span class="recent-lbl">Try:</span>
+              <a href="?q=08012345678" class="recent-pill">08012345678</a>
+              <a href="?q=07031234567" class="recent-pill">07031234567</a>
+              <a href="?q=09098765432" class="recent-pill">09098765432</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULT: NOT YET SEARCHED -->
+        {% if not request.GET.q %}
+        <div class="empty-state">
+          <div class="empty-icon">📱</div>
+          <div class="empty-title">Enter a number to check</div>
+          <div class="empty-sub">
+            Type any phone number above to instantly check if it has been
+            flagged as a scammer by the Nigerian community.
+          </div>
+        </div>
+
+        <!-- ── STATS OVERVIEW ── -->
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-num" id="totalReports">—</div>
+            <div class="stat-lbl">Total Reports</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="uniqueNumbers">—</div>
+            <div class="stat-lbl">Unique Numbers</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="todayReports">—</div>
+            <div class="stat-lbl">Added Today</div>
+          </div>
+        </div>
+
+        {% else %}
+
+        <!-- RESULT: SEARCHED -->
+        {% if result %}
+
+          {% if result.is_scammer %}
+          <!-- ══ SCAMMER FOUND ══ -->
+          <div class="scammer-card" id="resultCard">
+            <div class="scammer-header">
+              <div class="scammer-icon">🚨</div>
+              <div>
+                <div class="scammer-title">SCAMMER CONFIRMED</div>
+                <div class="scammer-sub">
+                  <strong style="color:var(--text); font-family:var(--mono)">{{ result.query }}</strong>
+                  has been reported by the Nigerian community
+                </div>
+              </div>
+              <div class="report-badge">
+                <div class="rb-num">{{ result.total_reports }}</div>
+                <div class="rb-lbl">Reports</div>
+              </div>
+            </div>
+
+            <div class="scammer-body">
+
+              <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:14px">
+                📋 Community Reports
+              </div>
+
+              {% for report in result.reports %}
+              <div class="report-item">
+                <div class="ri-top">
+                  <span class="scam-type-badge">{{ report.get_scam_type_display }}</span>
+                  {% if report.state %}<span class="state-badge">📍 {{ report.get_state_display }}</span>{% endif %}
+                  {% if report.created_at %}<span class="report-date">{{ report.created_at|date:"d M Y" }}</span>{% endif %}
+                </div>
+                <div class="report-desc">{{ report.description|truncatewords:40 }}</div>
+              </div>
+              {% endfor %}
+
+              <div class="warn-box">
+                ⚠️ <strong>Do not engage with this number.</strong>
+                Block and report on WhatsApp. If you have already sent money,
+                call your bank immediately and report to EFCC on
+                <strong>0800-326-6722</strong>.
+              </div>
+
+              <div class="action-row">
+                <a href="{% url 'report_scam' %}" class="act-btn">🚨 Add Another Report</a>
+                <a href="{% url 'whatsapp_scanner' %}" class="act-btn">💬 Scan Their Message</a>
+              </div>
+
+            </div>
+          </div>
+
+          {% else %}
+          <!-- ══ NUMBER LOOKS CLEAN ══ -->
+          <div class="safe-card" id="resultCard">
+            <div class="safe-header">
+              <div class="safe-icon">✅</div>
+              <div>
+                <div class="safe-title">Not in Our Database</div>
+                <div class="safe-sub">
+                  <strong style="color:var(--text); font-family:var(--mono)">{{ result.query }}</strong>
+                  has not been reported as a scammer — yet.
+                </div>
+              </div>
+            </div>
+            <div class="safe-body">
+              <div class="safe-tip">
+                ⚠️ <strong style="color:var(--gold)">Stay cautious.</strong>
+                A clean result does not mean the number is safe — scammers use new numbers daily.
+                Always verify the person independently before sending money or sharing personal details.
+                If something feels wrong, it probably is.
+              </div>
+              <div class="action-row" style="padding-top:16px;margin-top:16px">
+                <a href="{% url 'report_scam' %}" class="act-btn">🚨 Report This Number</a>
+                <a href="{% url 'whatsapp_scanner' %}" class="act-btn">💬 Scan Their Message</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+        {% else %}
+        <!-- Query was made but no result object -->
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">No results found</div>
+          <div class="empty-sub">
+            "<strong>{{ request.GET.q }}</strong>" was not found in the database.
+          </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+      </div>
+
+      <!-- ══ RIGHT SIDEBAR ══ -->
+      <div class="col-lg-4">
+
+        <div class="scard" style="border-color:var(--c20)">
+          <div class="scard-title" style="color:var(--cyan)">📱 What We Track</div>
+          <ul class="tip-list">
+            <li>📞 <span><strong>Phone numbers</strong> used for fraud calls</span></li>
+            <li>💳 <span><strong>Account numbers</strong> that received stolen money</span></li>
+            <li>💬 <span><strong>WhatsApp numbers</strong> used to send scam messages</span></li>
+            <li>🏦 <span><strong>Fake bank reps</strong> impersonating staff</span></li>
+            <li>🪙 <span><strong>Crypto wallets</strong> from investment fraud</span></li>
+          </ul>
+        </div>
+
+        <div class="scard" style="background:rgba(255,214,0,.03);border-color:rgba(255,214,0,.2)">
+          <div class="scard-title" style="color:var(--gold)">💡 If You Got a Suspicious Call</div>
+          <ul class="tip-list">
+            <li>🔍 Search the number here first</li>
+            <li>🚫 Never send money to unverified numbers</li>
+            <li>🏦 Call your bank on their official line</li>
+            <li>📸 Screenshot all conversations</li>
+            <li>🚨 Report to EFCC: <strong>0800-326-6722</strong></li>
+          </ul>
+        </div>
+
+        <div class="scard">
+          <div class="scard-title">🔗 Other Tools</div>
+          <a href="{% url 'whatsapp_scanner' %}" class="tool-lnk">💬 Scan WhatsApp Message</a>
+          <a href="{% url 'bank_alert' %}"       class="tool-lnk">🏦 Bank Alert Detector</a>
+          <a href="{% url 'link_scanner' %}"     class="tool-lnk">🔗 Phishing Link Scanner</a>
+          <a href="{% url 'report_scam' %}"      class="tool-lnk">🚨 Report a Scammer</a>
+        </div>
+
+        <div class="scard" style="border-color:rgba(255,61,113,.3)">
+          <div class="scard-title" style="color:var(--red)">🚨 Report & Help Others</div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 14px">
+            Know a scammer's number? Add it to our database so other
+            Nigerians can check it before falling victim.
+          </p>
+          <a href="{% url 'report_scam' %}"
+             style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:rgba(255,61,113,.1);border:1px solid rgba(255,61,113,.35);border-radius:9px;color:var(--red);font-weight:800;font-size:14px;text-decoration:none;transition:all .2s"
+             onmouseover="this.style.background='rgba(255,61,113,.2)'"
+             onmouseout="this.style.background='rgba(255,61,113,.1)'">
+            🚨 Report a Scammer Now
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Scroll to result on load ──────────────────────────────────
+{% if request.GET.q %}
+window.addEventListener('load', function() {
+  const card = document.getElementById('resultCard');
+  if (card) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+});
+{% endif %}
+
+// ── Loading state ─────────────────────────────────────────────
+document.getElementById('lookupForm').addEventListener('submit', function() {
+  const btn = this.querySelector('.btn-search');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:13px;height:13px;border-width:2px"></span> Searching...';
+  btn.disabled = true;
+});
+
+// ── Focus search input on page load ──────────────────────────
+{% if not request.GET.q %}
+window.addEventListener('load', function() {
+  document.getElementById('searchInput').focus();
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+<!-- templates/base/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ScamShield Nigeria{% endblock %}</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Leaflet CSS (for map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --bs-body-bg: #0f1117;
+      --bs-body-color: #e2e8f0;
+      --brand: #00e5ff;
+    }
+    body { background: var(--bs-body-bg); color: var(--bs-body-color); }
+    .navbar { background: #111827 !important; border-bottom: 1px solid #1e3a5f; }
+    .navbar-brand { color: var(--brand) !important; font-weight: 800; font-size: 1.4rem; }
+    .nav-link { color: #94a3b8 !important; }
+    .nav-link:hover, .nav-link.active { color: var(--brand) !important; }
+    .card { background: #111827; border: 1px solid #1e3a5f; }
+    .btn-primary { background: var(--brand); border-color: var(--brand); color: #000; font-weight: 700; }
+    .btn-primary:hover { background: #00b8d4; border-color: #00b8d4; color: #000; }
+    footer { background: #111827; border-top: 1px solid #1e3a5f; }
+    .risk-high { color: #ff3d71; }
+    .risk-medium { color: #ffd600; }
+    .risk-low { color: #00c853; }
+    .badge-high { background: rgba(255,61,113,0.2); color: #ff3d71; border: 1px solid #ff3d71; }
+    .badge-medium { background: rgba(255,214,0,0.2); color: #ffd600; border: 1px solid #ffd600; }
+    .badge-low { background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/">🛡 ScamShield</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item">
+  <a class="nav-link" href="/scanner/link/">Scan Link</a>
+</li>
+        <li class="nav-item"><a class="nav-link" href="/scanner/whatsapp/">Scan Message</a></li>
+        <li class="nav-item"><a class="nav-link" href="/scanner/bank-alert/">Bank Alert</a></li>
+        <li class="nav-item"><a class="nav-link" href="/scanner/map/">Scam Map</a></li>
+        <li class="nav-item"><a class="nav-link" href="/community/report/">Report Scam</a></li>
+        <li class="nav-item"><a class="nav-link" href="/community/lookup/">Number Lookup</a></li>
+        <li class="nav-item">
+  <a class="nav-link" href="{% url 'chatbot' %}">Ask SABI</a>
+</li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- MESSAGES -->
+{% if messages %}
+<div class="container mt-3">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+    {{ message }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- CONTENT -->
+<main class="py-4">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="py-4 mt-5">
+  <div class="container text-center">
+    <p class="text-white mb-0">🛡 ScamShield Nigeria · Built for 3MTT NextGen Showcase · Protecting Nigerians from Cybercrime</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

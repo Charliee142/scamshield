@@ -1,0 +1,346 @@
+{% extends 'base/base.html' %}
+{% block title %}Scam Intelligence Map — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<style>
+  .map-wrap { background:#0a0e1a; min-height:100vh; padding-bottom:60px; }
+
+  /* Page header */
+  .map-header {
+    background:linear-gradient(135deg,#111827,#0d1117);
+    border-bottom:1px solid #1e3a5f;
+    padding:32px 0;
+    margin-bottom:0;
+  }
+  .map-header h1 { font-size:clamp(26px,4vw,40px); font-weight:900; letter-spacing:-1px; margin:0; }
+  .map-header h1 span { color:#00e5ff; }
+
+  /* KPI pills at top */
+  .map-kpi {
+    display:flex; flex-wrap:wrap; gap:12px; margin-top:20px;
+  }
+  .kpi-pill {
+    background:#0d1117; border:1px solid #1e3a5f;
+    border-radius:50px; padding:8px 20px;
+    display:flex; align-items:center; gap:10px; font-size:14px;
+  }
+  .kpi-pill .num { font-size:20px; font-weight:900; font-family:monospace; }
+
+  /* Map container */
+  #scam-map {
+    height: 560px;
+    width: 100%;
+    border-radius: 0;
+    z-index: 1;
+  }
+
+  /* Legend overlay */
+  .map-legend {
+    background:rgba(13,17,23,.92);
+    border:1px solid #1e3a5f;
+    border-radius:10px;
+    padding:14px 18px;
+    font-size:13px;
+    min-width:160px;
+  }
+  .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .legend-row:last-child { margin-bottom:0; }
+  .legend-circle { width:14px; height:14px; border-radius:50%; flex-shrink:0; opacity:.8; }
+
+  /* State table section */
+  .table-section { padding:40px 0 0; }
+  .section-title-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:20px;
+  }
+  .section-title-row h4 { font-size:20px; font-weight:800; margin:0; }
+
+  /* Filter tabs */
+  .filter-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-tab {
+    background:#0d1117; border:1px solid #1e3a5f;
+    border-radius:50px; padding:6px 16px; font-size:13px;
+    cursor:pointer; transition:all .2s; color:#94a3b8;
+    user-select:none;
+  }
+  .filter-tab:hover { border-color:#64748b; color:#e2e8f0; }
+  .filter-tab.active { border-color:#00e5ff; color:#00e5ff; background:rgba(0,229,255,.08); }
+  .filter-tab[data-filter=HIGH].active  { border-color:#ff3d71; color:#ff3d71; background:rgba(255,61,113,.08); }
+  .filter-tab[data-filter=MEDIUM].active{ border-color:#ffd600; color:#ffd600; background:rgba(255,214,0,.08); }
+  .filter-tab[data-filter=LOW].active   { border-color:#00c853; color:#00c853; background:rgba(0,200,83,.08); }
+
+  /* State cards grid */
+  .states-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+  .state-card {
+    background:#111827; border:1px solid #1e3a5f; border-radius:12px;
+    padding:18px 20px; transition:all .2s; cursor:pointer;
+  }
+  .state-card:hover { border-color:#00e5ff; transform:translateY(-2px); }
+  .state-card.hidden { display:none; }
+
+  .state-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .state-name { font-size:16px; font-weight:800; }
+  .risk-badge-sm {
+    font-size:11px; font-weight:800; padding:3px 10px; border-radius:4px;
+  }
+  .risk-HIGH   { background:rgba(255,61,113,.15); color:#ff3d71; border:1px solid rgba(255,61,113,.4); }
+  .risk-MEDIUM { background:rgba(255,214,0,.15);  color:#ffd600;  border:1px solid rgba(255,214,0,.4); }
+  .risk-LOW    { background:rgba(0,200,83,.15);   color:#00c853;  border:1px solid rgba(0,200,83,.4); }
+
+  .state-bar-row { display:flex; align-items:center; gap:8px; }
+  .bar-track { flex:1; height:6px; background:#1e3a5f; border-radius:3px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+  .bar-fill.HIGH   { background:linear-gradient(90deg,#ff3d71,#ff7043); }
+  .bar-fill.MEDIUM { background:linear-gradient(90deg,#ffd600,#ff9800); }
+  .bar-fill.LOW    { background:linear-gradient(90deg,#00c853,#00e5ff); }
+  .bar-count { font-size:13px; font-weight:700; font-family:monospace; min-width:28px; text-align:right; }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:60px 20px; color:#64748b; }
+
+  /* Popup custom style */
+  .leaflet-popup-content-wrapper {
+    background:#111827 !important; color:#e2e8f0 !important;
+    border:1px solid #1e3a5f !important; border-radius:10px !important;
+    box-shadow:0 8px 30px rgba(0,0,0,.5) !important;
+  }
+  .leaflet-popup-tip { background:#111827 !important; }
+  .popup-inner h4 { font-size:15px; font-weight:800; margin:0 0 6px; color:#00e5ff; }
+  .popup-inner .count { font-size:24px; font-weight:900; font-family:monospace; }
+  .popup-inner .sub { font-size:12px; color:#64748b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-wrap">
+
+  <!-- Header -->
+  <div class="map-header">
+    <div class="container">
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <a href="/" style="color:#64748b; font-size:13px; text-decoration:none">← Home</a>
+        <span style="color:#1e3a5f">/</span>
+        <span style="color:#64748b; font-size:13px">Scam Intelligence Map</span>
+      </div>
+      <h1>🗺️ National Scam <span>Intelligence Map</span></h1>
+      <p style="color:#64748b; margin:8px 0 0; font-size:15px">
+        Real-time scam activity across all Nigerian states — based on user scans and community reports.
+      </p>
+      <div class="map-kpi">
+        <div class="kpi-pill">
+          <div class="num" style="color:#00e5ff">{{ total_incidents|default:"0" }}</div>
+          <div style="color:#64748b">Total Incidents</div>
+        </div>
+        <div class="kpi-pill">
+          <div class="num" style="color:#ff3d71">{{ total_states|default:"0" }}</div>
+          <div style="color:#64748b">States Affected</div>
+        </div>
+        {% if most_active %}
+        <div class="kpi-pill">
+          <div class="num" style="color:#ffd600">{{ most_active.state }}</div>
+          <div style="color:#64748b">Most Active</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAP ── -->
+  <div id="scam-map"></div>
+
+  <!-- ── STATE BREAKDOWN TABLE ── -->
+  <div class="table-section">
+    <div class="container">
+
+      <div class="section-title-row flex-wrap gap-3">
+        <h4>State Breakdown</h4>
+        <div class="filter-tabs">
+          <div class="filter-tab active" data-filter="ALL">All States</div>
+          <div class="filter-tab" data-filter="HIGH">🔴 High Risk</div>
+          <div class="filter-tab" data-filter="MEDIUM">🟡 Medium</div>
+          <div class="filter-tab" data-filter="LOW">🟢 Low</div>
+        </div>
+      </div>
+
+      {% if state_table %}
+        {% with max_count=state_table.0.count %}
+        <div class="states-grid" id="statesGrid">
+          {% for s in state_table %}
+          <div class="state-card" data-risk="{{ s.risk }}" onclick="flyToState('{{ s.state_slug }}')">
+            <div class="state-card-top">
+              <div class="state-name">{{ s.state }}</div>
+              <span class="risk-badge-sm risk-{{ s.risk }}">{{ s.risk }}</span>
+            </div>
+            <div class="state-bar-row">
+              <div class="bar-track">
+                <div class="bar-fill {{ s.risk }}"
+                     style="width:{% widthratio s.count max_count 100 %}%"></div>
+              </div>
+              <div class="bar-count"
+                   style="color:{% if s.risk == 'HIGH' %}#ff3d71{% elif s.risk == 'MEDIUM' %}#ffd600{% else %}#00c853{% endif %}">
+                {{ s.count }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endwith %}
+      {% else %}
+        <div class="empty-state">
+          <div style="font-size:56px; margin-bottom:16px">🗺️</div>
+          <h5>No data yet</h5>
+          <p>Scam activity will appear here as users run scans and submit reports.</p>
+          <a href="{% url 'whatsapp_scanner' %}" class="btn btn-primary mt-2">Run a Scan</a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ── SAFETY TIPS ── -->
+  <div class="container mt-5">
+    <div class="row g-3">
+      <div class="col-12">
+        <div style="background:#111827; border:1px solid #1e3a5f; border-radius:14px; padding:28px">
+          <h5 class="fw-bold mb-3">🛡️ How to Use This Map</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div style="display:flex; gap:12px; font-size:14px; color:#94a3b8">
+                <span style="font-size:20px; flex-shrink:0">🔴</span>
+                <div><strong style="color:#ff3d71; display:block; margin-bottom:4px">High Risk States</strong>
+                  50+ incidents reported. Be extra cautious when receiving unsolicited calls or messages.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="display:flex; gap:12px; font-size:14px; color:#94a3b8">
+                <span style="font-size:20px; flex-shrink:0">🟡</span>
+                <div><strong style="color:#ffd600; display:block; margin-bottom:4px">Medium Risk States</strong>
+                  20–49 incidents. Stay vigilant and always verify bank alerts directly in your app.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="display:flex; gap:12px; font-size:14px; color:#94a3b8">
+                <span style="font-size:20px; flex-shrink:0">🟢</span>
+                <div><strong style="color:#00c853; display:block; margin-bottom:4px">Lower Risk States</strong>
+                  Under 20 incidents. Still report any scams to help keep this map accurate.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Init map ───────────────────────────────────────────────────────────────
+  const map = L.map('scam-map', {
+    center: [9.082, 8.6753],
+    zoom: 6,
+    zoomControl: true,
+    scrollWheelZoom: true,
+  });
+
+  // ── FREE dark tile layer — no API key required ─────────────────────────────
+  // CartoDB Dark Matter: completely free, no signup, same dark aesthetic
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+
+  // ── Legend ─────────────────────────────────────────────────────────────────
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = () => {
+    const div = L.DomUtil.create('div', 'map-legend');
+    div.innerHTML = `
+      <div style="font-size:12px;font-weight:800;margin-bottom:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Risk Level</div>
+      <div class="legend-row"><div class="legend-circle" style="background:#ff3d71"></div>High (50+ reports)</div>
+      <div class="legend-row"><div class="legend-circle" style="background:#ffd600"></div>Medium (20–49)</div>
+      <div class="legend-row"><div class="legend-circle" style="background:#00c853"></div>Low (&lt;20)</div>`;
+    return div;
+  };
+  legend.addTo(map);
+
+  // ── State coord lookup for "fly to" ────────────────────────────────────────
+  const STATE_COORDS = {
+    lagos:[6.5244,3.3792], abuja:[9.0579,7.4951], kano:[12.0022,8.5919],
+    rivers:[4.8156,7.0498], oyo:[7.3775,3.9470], delta:[5.5251,5.7358],
+    anambra:[6.2103,7.0694], enugu:[6.4584,7.5464], kaduna:[10.5264,7.4384],
+    ogun:[6.9980,3.4736], imo:[5.4927,7.0258], borno:[11.8333,13.1500],
+    katsina:[12.9891,7.6006], edo:[6.3350,5.6037], cross_river:[5.8702,8.5988],
+    akwa_ibom:[5.0073,7.8494], sokoto:[13.0622,5.2339], osun:[7.5629,4.5200],
+    ondo:[7.1000,4.8400], benue:[7.1905,8.1306], adamawa:[9.3265,12.3984],
+    ekiti:[7.7190,5.3110], kwara:[8.4966,4.5421], niger:[9.9309,5.5983],
+    plateau:[9.2182,9.5179], taraba:[7.9995,10.7744], nasarawa:[8.5378,8.3206],
+    gombe:[10.2904,11.1671], zamfara:[12.1700,6.6600], kebbi:[12.4539,4.1975],
+    jigawa:[12.2280,9.5616], yobe:[12.2939,11.4390], bauchi:[10.3158,9.8442],
+    bayelsa:[4.7719,6.0699], ebonyi:[6.2649,8.0137], abia:[5.4527,7.5248],
+  };
+
+  function flyToState(slug) {
+    const coords = STATE_COORDS[slug];
+    if (coords) map.flyTo(coords, 8, { duration: 1.2 });
+  }
+
+  // ── Fetch markers from API ─────────────────────────────────────────────────
+  const markerMap = {};
+
+  fetch('{% url "map_data_api" %}')
+    .then(r => r.json())
+    .then(data => {
+      data.markers.forEach(m => {
+        const marker = L.circleMarker([m.lat, m.lng], {
+          radius:      m.radius,
+          fillColor:   m.color,
+          color:       m.color,
+          weight:      2,
+          opacity:     0.9,
+          fillOpacity: 0.4,
+        });
+
+        const riskLabel = m.color === '#ff3d71' ? 'HIGH' : (m.color === '#ffd600' ? 'MEDIUM' : 'LOW');
+        marker.bindPopup(`
+          <div class="popup-inner">
+            <h4>${m.state}</h4>
+            <div class="count" style="color:${m.color}">${m.count}</div>
+            <div class="sub">scam incidents · ${riskLabel} risk</div>
+          </div>
+        `);
+
+        marker.on('mouseover', function() { this.setStyle({ fillOpacity: 0.75, weight: 3 }); });
+        marker.on('mouseout',  function() { this.setStyle({ fillOpacity: 0.4,  weight: 2 }); });
+
+        marker.addTo(map);
+        markerMap[m.state.toLowerCase().replace(/ /g, '_')] = marker;
+      });
+    })
+    .catch(err => console.warn('Map data fetch failed:', err));
+
+  // ── Filter tabs ────────────────────────────────────────────────────────────
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const filter = this.dataset.filter;
+      document.querySelectorAll('.state-card').forEach(card => {
+        card.classList.toggle('hidden',
+          filter !== 'ALL' && card.dataset.risk !== filter
+        );
+      });
+    });
+  });
+
+  // ── Animate bar widths on load ─────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0';
+      setTimeout(() => { b.style.width = w; }, 300);
+    });
+  });
+</script>
+{% endblock %}

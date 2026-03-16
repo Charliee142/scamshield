@@ -1,0 +1,573 @@
+  {% extends 'base/base.html' %}
+  {% block title %}AI Education Coach — ScamShield Nigeria{% endblock %}
+
+  {% block extra_css %}
+  <style>
+    .coach-page { background: #0a0e1a; min-height: 100vh; padding: 40px 0 80px; }
+
+    /* ── HERO ── */
+    .coach-hero {
+      background: linear-gradient(135deg, #111827 0%, #0d1117 100%);
+      border-bottom: 1px solid #1e3a5f;
+      padding: 44px 0 36px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .coach-hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -80px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: #00e5ff; font-weight: 700; margin-bottom: 10px;
+    }
+    .hero-title { font-size: 38px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+    .hero-title span { color: #00e5ff; }
+    .hero-sub { color: #64748b; font-size: 15px; max-width: 540px; line-height: 1.7; }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: #111827;
+      border: 1px solid #1e3a5f;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .form-card-header {
+      background: #0d1117;
+      padding: 18px 24px;
+      border-bottom: 1px solid #1e3a5f;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .form-card-header h4 { margin: 0; font-size: 16px; font-weight: 800; }
+    .form-card-header p  { margin: 0; font-size: 13px; color: #64748b; }
+    .form-card-body { padding: 24px; }
+
+    .form-label-custom {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #64748b; margin-bottom: 8px; display: block;
+    }
+    .form-control-dark {
+      background: #0d1117!important;
+      border: 1px solid #1e3a5f!important;
+      color: #e2e8f0!important;
+      border-radius: 10px!important;
+      padding: 13px 16px!important;
+      font-size: 14px!important;
+      transition: border-color 0.2s, box-shadow 0.2s!important;
+      width: 100%;
+      font-family: inherit;
+    }
+    .form-control-dark:focus {
+      border-color: #00e5ff!important;
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.1)!important;
+      outline: none!important;
+      background: #0d1117!important;
+    }
+    .form-control-dark::placeholder { color: #475569!important; }
+    textarea.form-control-dark { resize: vertical; min-height: 80px; }
+
+    .btn-ask {
+      background: #00e5ff;
+      color: #000;
+      font-weight: 800;
+      border: none;
+      padding: 13px 32px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(0,229,255,0.25);
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: inherit;
+    }
+    .btn-ask:hover {
+      background: #fff;
+      box-shadow: 0 0 36px rgba(0,229,255,0.45);
+      transform: translateY(-2px);
+    }
+
+    /* ── ANSWER CARD ── */
+    .answer-card {
+      background: #111827;
+      border: 1px solid rgba(0,229,255,0.25);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      animation: slideIn 0.4s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .answer-header {
+      background: rgba(0,229,255,0.07);
+      border-bottom: 1px solid rgba(0,229,255,0.15);
+      padding: 16px 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .answer-header .ai-badge {
+      background: rgba(0,229,255,0.15);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: #00e5ff;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .answer-header h5 { margin: 0; font-size: 14px; font-weight: 700; color: #00e5ff; }
+    .answer-body { padding: 24px; }
+    .answer-text {
+      font-size: 15px;
+      line-height: 1.85;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    /* Style safety tip line */
+    .answer-text .safety-tip {
+      display: block;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(255,214,0,0.08);
+      border: 1px solid rgba(255,214,0,0.25);
+      border-radius: 8px;
+      color: #ffd600;
+      font-weight: 600;
+    }
+
+    /* ── QUESTION ECHO ── */
+    .question-echo {
+      background: #0d1117;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .question-echo strong { color: #e2e8f0; }
+
+    /* ── SUGGESTED QUESTIONS ── */
+    .suggestions-card {
+      background: #111827;
+      border: 1px solid #1e3a5f;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .suggestions-title {
+      font-size: 13px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #64748b; margin-bottom: 14px;
+    }
+    .suggestion-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .suggestion-btn {
+      background: #0d1117;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 13px;
+      color: #94a3b8;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      display: flex; align-items: flex-start; gap: 8px;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+    .suggestion-btn:hover {
+      border-color: #00e5ff;
+      color: #e2e8f0;
+      background: rgba(0,229,255,0.05);
+      transform: translateX(3px);
+    }
+    .suggestion-btn .sq-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── CONTEXT BOX ── */
+    .context-toggle-btn {
+      background: none;
+      border: 1px dashed #1e3a5f;
+      color: #64748b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .context-toggle-btn:hover { border-color: #00e5ff; color: #00e5ff; }
+    .context-box { display: none; margin-top: 10px; }
+    .context-box.open { display: block; }
+
+    /* ── INFO CARDS SIDEBAR ── */
+    .info-card {
+      background: #111827;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .info-card h6 { font-size: 13px; font-weight: 800; margin-bottom: 10px; }
+    .info-list { list-style: none; padding: 0; margin: 0; }
+    .info-list li {
+      font-size: 13px; color: #64748b;
+      padding: 6px 0;
+      border-bottom: 1px solid #1e3a5f;
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .info-list li:last-child { border-bottom: none; }
+    .info-list li .icon { flex-shrink: 0; }
+
+    /* ── TOPIC PILLS ── */
+    .topic-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .topic-pill {
+      background: #0d1117;
+      border: 1px solid #1e3a5f;
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .topic-pill:hover { border-color: #00e5ff; color: #00e5ff; }
+
+    /* ── HISTORY LIST ── */
+    .history-item {
+      background: #0d1117;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .history-item:hover { border-color: #1e3a5f; color: #94a3b8; background: #111827; }
+    .history-item .hi-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    @media (max-width: 768px) {
+      .suggestion-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 28px; }
+    }
+  </style>
+  {% endblock %}
+
+  {% block content %}
+
+  <!-- ── HERO ── -->
+  <div class="coach-hero">
+    <div class="container">
+      <div class="hero-eyebrow">AI-Powered Learning</div>
+      <h1 class="hero-title">🤖 Scam <span>Education Coach</span></h1>
+      <p class="hero-sub">
+        Ask SABI anything about Nigerian scams, cybersecurity, or online safety.
+        Get clear, plain-English answers built specifically for Nigerians.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="coach-page">
+    <div class="container">
+      <div class="row g-4">
+{% if error %}
+<div style="background:rgba(255,61,113,0.1); border:1px solid rgba(255,61,113,0.3); 
+     border-radius:12px; padding:16px 20px; margin-bottom:20px; color:#ff3d71; font-size:14px;">
+  ⚠️ {{ error }}
+</div>
+{% endif %}
+        <!-- LEFT: FORM + ANSWER -->
+        <div class="col-lg-8">
+
+          <!-- ── ANSWER (shown when result exists) ── -->
+          {% if answer %}
+          <div class="answer-card">
+            <div class="answer-header">
+              <span class="ai-badge">🤖 AI Response</span>
+              <h5>SABI answered your question</h5>
+            </div>
+            <div class="answer-body">
+              <!-- Echo the question -->
+              {% if question %}
+              <div class="question-echo">
+                <strong>Your question:</strong> {{ question }}
+              </div>
+              {% endif %}
+              <!-- Format answer — highlight "Safety Tip:" line -->
+              <div class="answer-text" id="answerText">{{ answer }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- ── ASK FORM ── -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <span style="font-size:22px">💬</span>
+              <div>
+                <h4>Ask SABI Anything</h4>
+                <p>About scams, cybersecurity, or online safety in Nigeria</p>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <form method="POST" id="coachForm">
+                {% csrf_token %}
+
+                <!-- Optional context message -->
+                <div class="mb-3">
+                  <button
+                    type="button"
+                    class="context-toggle-btn"
+                    onclick="toggleContext()"
+                    id="contextToggleBtn"
+                  >
+                    📋 Add a message for context (optional)
+                  </button>
+                  <div class="context-box" id="contextBox">
+                    <label class="form-label-custom mt-2">Paste the suspicious message here (optional)</label>
+                    <textarea
+                      name="message_context"
+                      class="form-control-dark"
+                      rows="4"
+                      placeholder="Paste the WhatsApp message or email you received... SABI will analyze it alongside your question."
+                    >{{ message_context }}</textarea>
+                  </div>
+                </div>
+
+                <!-- Question input -->
+                <div class="mb-3">
+                  <label class="form-label-custom">Your Question <span style="color:#ff3d71">*</span></label>
+                  <input
+                    type="text"
+                    name="question"
+                    class="form-control-dark"
+                    placeholder='e.g. "Why is this a scam?" or "How do I secure my GTBank app?"'
+                    value="{{ question }}"
+                    required
+                    id="questionInput"
+                    autocomplete="off"
+                  >
+                </div>
+
+                <button type="submit" class="btn-ask" id="askBtn">
+                  <span>🔍</span> Ask SABI
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- ── SUGGESTED QUESTIONS ── -->
+          <div class="suggestions-card">
+            <div class="suggestions-title">💡 Suggested Questions</div>
+            <div class="suggestion-grid">
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="Why is this a scam?">
+                <span class="sq-icon">🔍</span>
+                Why is this a scam?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="How do fake bank alerts work in Nigeria?">
+                <span class="sq-icon">🏦</span>
+                How do fake bank alerts work?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="What is OTP fraud and how can I avoid it?">
+                <span class="sq-icon">📱</span>
+                What is OTP fraud?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="How do I know if a job offer on WhatsApp is real or a scam?">
+                <span class="sq-icon">💼</span>
+                Is this job offer real?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="I already sent money to a scammer. What should I do right now?">
+                <span class="sq-icon">🚨</span>
+                I sent money to a scammer. Help!
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="How do crypto investment scams work in Nigeria?">
+                <span class="sq-icon">🪙</span>
+                How do crypto scams work?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="How do I secure my WhatsApp account from hackers?">
+                <span class="sq-icon">🔐</span>
+                How do I secure WhatsApp?
+              </button>
+              <button class="suggestion-btn" onclick="askQuestion(this.dataset.q)"
+                data-q="How do I report a scammer to EFCC in Nigeria?">
+                <span class="sq-icon">⚖️</span>
+                How do I report to EFCC?
+              </button>
+            </div>
+          </div>
+
+          <!-- ── TOPIC PILLS ── -->
+          <div class="mb-4">
+            <div class="suggestions-title mb-2">🏷️ Browse by Topic</div>
+            <div class="topic-pills">
+              <button class="topic-pill" onclick="askQuestion('How does SIM swap fraud work in Nigeria?')">SIM Swap</button>
+              <button class="topic-pill" onclick="askQuestion('What is BVN fraud and how do I protect my BVN?')">BVN Protection</button>
+              <button class="topic-pill" onclick="askQuestion('How do I identify a Ponzi scheme in Nigeria?')">Ponzi Schemes</button>
+              <button class="topic-pill" onclick="askQuestion('How do I verify a bank transfer without a screenshot?')">Verify Transfers</button>
+              <button class="topic-pill" onclick="askQuestion('What are common romance scam signs in Nigeria?')">Romance Scams</button>
+              <button class="topic-pill" onclick="askQuestion('How do lottery scams work in Nigeria?')">Lottery Scams</button>
+              <button class="topic-pill" onclick="askQuestion('How do I freeze a scammer bank account?')">Freeze Account</button>
+              <button class="topic-pill" onclick="askQuestion('How do I set up 2FA on my banking apps?')">Enable 2FA</button>
+              <button class="topic-pill" onclick="askQuestion('What is the EFCC and how do they help scam victims?')">EFCC Help</button>
+              <button class="topic-pill" onclick="askQuestion('How do fake NNPC or government job portals work?')">Fake Job Portals</button>
+              <button class="topic-pill" onclick="askQuestion('How do I identify a fake online shop in Nigeria?')">Fake Shops</button>
+              <button class="topic-pill" onclick="askQuestion('What should I never share with anyone online?')">What Not to Share</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: SIDEBAR -->
+        <div class="col-lg-4">
+
+          <!-- About SABI -->
+          <div class="info-card" style="border-color: rgba(0,229,255,0.2)">
+            <h6 style="color:#00e5ff">🤖 About SABI</h6>
+            <p style="font-size:13px; color:#64748b; margin-bottom:14px; line-height:1.7">
+              SABI (which means "to know" in Pidgin) is ScamShield's AI coach,
+              trained specifically on Nigerian cybersecurity threats.
+              Ask anything — SABI speaks plain English AND Pidgin.
+            </p>
+            <div class="topic-pills">
+              <span style="background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.2); color:#00e5ff; border-radius:50px; padding:4px 12px; font-size:11px">🇳🇬 Nigeria-Focused</span>
+              <span style="background:rgba(0,200,83,0.1); border:1px solid rgba(0,200,83,0.2); color:#00c853; border-radius:50px; padding:4px 12px; font-size:11px">✅ Always Free</span>
+              <span style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); color:#a855f7; border-radius:50px; padding:4px 12px; font-size:11px">🗣 Pidgin-Friendly</span>
+            </div>
+          </div>
+
+          <!-- SABI Can Help With -->
+          <div class="info-card">
+            <h6 style="color:#ffd600">📋 SABI Can Help With</h6>
+            <ul class="info-list">
+              <li><span class="icon">🔍</span> Analyzing suspicious messages</li>
+              <li><span class="icon">🏦</span> Bank alert verification advice</li>
+              <li><span class="icon">📱</span> WhatsApp & social media safety</li>
+              <li><span class="icon">💸</span> Investment & Ponzi scheme detection</li>
+              <li><span class="icon">🚨</span> Recovery steps after being scammed</li>
+              <li><span class="icon">⚖️</span> How to report to EFCC & police</li>
+              <li><span class="icon">🔐</span> Securing your accounts</li>
+              <li><span class="icon">🪙</span> Crypto scam awareness</li>
+            </ul>
+          </div>
+
+          <!-- Emergency Contacts -->
+          <div class="info-card" style="border-color: rgba(255,61,113,0.3)">
+            <h6 style="color:#ff3d71">🚨 Emergency Contacts</h6>
+            <ul class="info-list">
+              <li><span class="icon">🏛️</span> EFCC: <strong style="color:#e2e8f0">0800-326-6722</strong></li>
+              <li><span class="icon">🌐</span> EFCC Online: <strong style="color:#00e5ff">efcc.gov.ng</strong></li>
+              <li><span class="icon">🏦</span> GTBank: <strong style="color:#e2e8f0">0700-482-6000</strong></li>
+              <li><span class="icon">🏦</span> Zenith: <strong style="color:#e2e8f0">0700-979-7979</strong></li>
+              <li><span class="icon">🏦</span> Access: <strong style="color:#e2e8f0">0700-300-0000</strong></li>
+              <li><span class="icon">🏛️</span> NITDA: <strong style="color:#e2e8f0">nitda.gov.ng</strong></li>
+            </ul>
+          </div>
+
+          <!-- Quick Scan Links -->
+          <div class="info-card" style="background:rgba(0,229,255,0.04); border-color:rgba(0,229,255,0.2)">
+            <h6 style="color:#00e5ff">⚡ Quick Scan Tools</h6>
+            <a href="{% url 'whatsapp_scanner' %}"
+              style="display:flex; align-items:center; gap:10px; padding:10px; background:#0d1117; border:1px solid #1e3a5f; border-radius:8px; text-decoration:none; color:#e2e8f0; font-size:13px; margin-bottom:8px; transition:all 0.2s"
+              onmouseover="this.style.borderColor='#00e5ff'" onmouseout="this.style.borderColor='#1e3a5f'">
+              <span>💬</span> Scan WhatsApp Message
+            </a>
+            <a href="{% url 'bank_alert' %}"
+              style="display:flex; align-items:center; gap:10px; padding:10px; background:#0d1117; border:1px solid #1e3a5f; border-radius:8px; text-decoration:none; color:#e2e8f0; font-size:13px; margin-bottom:8px; transition:all 0.2s"
+              onmouseover="this.style.borderColor='#00e5ff'" onmouseout="this.style.borderColor='#1e3a5f'">
+              <span>🏦</span> Check Bank Alert
+            </a>
+            <a href="{% url 'link_scanner' %}"
+              style="display:flex; align-items:center; gap:10px; padding:10px; background:#0d1117; border:1px solid #1e3a5f; border-radius:8px; text-decoration:none; color:#e2e8f0; font-size:13px; transition:all 0.2s"
+              onmouseover="this.style.borderColor='#00e5ff'" onmouseout="this.style.borderColor='#1e3a5f'">
+              <span>🔗</span> Scan Suspicious Link
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %}
+
+  {% block extra_js %}
+  <script>
+    // ── Pre-fill question from suggested buttons
+    function askQuestion(question) {
+      document.getElementById('questionInput').value = question;
+      document.getElementById('questionInput').focus();
+      document.getElementById('coachForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ── Toggle context box
+    function toggleContext() {
+      const box = document.getElementById('contextBox');
+      const btn = document.getElementById('contextToggleBtn');
+      box.classList.toggle('open');
+      btn.textContent = box.classList.contains('open')
+        ? '📋 Hide context message'
+        : '📋 Add a message for context (optional)';
+    }
+
+    // ── If there was a message_context value, show the context box
+    {% if message_context %}
+      document.getElementById('contextBox').classList.add('open');
+      document.getElementById('contextToggleBtn').textContent = '📋 Hide context message';
+    {% endif %}
+
+    // ── Loading state on submit
+    document.getElementById('coachForm').addEventListener('submit', function () {
+      const btn = document.getElementById('askBtn');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:16px;height:16px;border-width:2px"></span> SABI is thinking...';
+      btn.disabled = true;
+      btn.style.background = '#0d9aad';
+    });
+
+    // ── Highlight "Safety Tip:" line in the answer
+    const answerEl = document.getElementById('answerText');
+    if (answerEl) {
+      const raw = answerEl.innerHTML;
+      answerEl.innerHTML = raw.replace(
+        /(Safety Tip:[^<\n]*)/gi,
+        '<span class="safety-tip">💡 $1</span>'
+      );
+    }
+
+    // ── Auto-open context box if context was submitted
+    {% if answer and message_context %}
+    document.getElementById('contextBox').classList.add('open');
+    {% endif %}
+
+    // ── Scroll to answer on page load if present
+    {% if answer %}
+    window.addEventListener('load', function () {
+      const answerCard = document.querySelector('.answer-card');
+      if (answerCard) {
+        setTimeout(() => answerCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+      }
+    });
+    {% endif %}
+  </script>
+  {% endblock %}

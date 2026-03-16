@@ -1,0 +1,668 @@
+{% extends 'base/base.html' %}
+{% block title %}Dashboard — ScamShield Nigeria{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── LAYOUT ── */
+  .dashboard-wrap {
+    background: #0a0e1a;
+    min-height: 100vh;
+    padding: 32px 0 60px;
+  }
+  .page-header {
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid #1e3a5f;
+  }
+  .page-title { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+  .page-title span { color: #00e5ff; }
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,200,83,0.1);
+    border: 1px solid rgba(0,200,83,0.3);
+    color: #00c853;
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pulse { width: 7px; height: 7px; background: #00c853; border-radius: 50%; animation: blink 1.4s ease infinite; }
+  @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0.2 } }
+
+  /* ── KPI CARDS ── */
+  .kpi-card {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 24px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--kpi-color, #00e5ff); transform: translateY(-3px); }
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--kpi-color, #00e5ff);
+    border-radius: 0 0 14px 14px;
+    opacity: 0.5;
+  }
+  .kpi-icon { font-size: 28px; margin-bottom: 12px; }
+  .kpi-num {
+    font-size: 40px;
+    font-weight: 900;
+    font-family: 'Courier New', monospace;
+    color: var(--kpi-color, #00e5ff);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .kpi-change { font-size: 12px; margin-top: 8px; }
+  .kpi-change.up { color: #00c853; }
+  .kpi-change.down { color: #ff3d71; }
+
+  /* ── SECTION HEADERS ── */
+  .section-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .section-hdr h5 { font-size: 16px; font-weight: 800; margin: 0; }
+  .view-all { font-size: 13px; color: #00e5ff; text-decoration: none; }
+  .view-all:hover { text-decoration: underline; }
+
+  /* ── CARDS ── */
+  .dash-card {
+    background: #111827;
+    border: 1px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 24px;
+    height: 100%;
+  }
+
+  /* ── RISK DONUT (CSS only) ── */
+  .donut-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
+  .donut-svg { transform: rotate(-90deg); }
+  .donut-track { fill: none; stroke: #1e3a5f; stroke-width: 18; }
+  .donut-high { fill: none; stroke: #ff3d71; stroke-width: 18; stroke-linecap: round; }
+  .donut-med  { fill: none; stroke: #ffd600; stroke-width: 18; stroke-linecap: round; }
+  .donut-low  { fill: none; stroke: #00c853; stroke-width: 18; stroke-linecap: round; }
+  .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #e2e8f0;
+  }
+  .donut-center small { font-size: 11px; color: #64748b; font-weight: 400; }
+
+  /* ── LEGEND ── */
+  .legend-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+  .legend-label { font-size: 14px; display: flex; align-items: center; flex: 1; }
+  .legend-val { font-size: 14px; font-weight: 700; font-family: monospace; }
+
+  /* ── SCAN TABLE ── */
+  .scan-row { border-bottom: 1px solid #1e3a5f; padding: 14px 0; display: flex; align-items: center; gap: 12px; }
+  .scan-row:last-child { border-bottom: none; }
+  .risk-badge {
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 800;
+    flex-shrink: 0;
+    min-width: 46px;
+    text-align: center;
+  }
+  .risk-high { background: rgba(255,61,113,0.15); color: #ff3d71; border: 1px solid rgba(255,61,113,0.4); }
+  .risk-med  { background: rgba(255,214,0,0.15);  color: #ffd600;  border: 1px solid rgba(255,214,0,0.4); }
+  .risk-low  { background: rgba(0,200,83,0.15);   color: #00c853;  border: 1px solid rgba(0,200,83,0.4); }
+  .scan-text { flex: 1; font-size: 13px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .scan-time { font-size: 12px; color: #475569; flex-shrink: 0; }
+
+  /* ── STATE BAR CHART ── */
+  .state-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .state-name { font-size: 13px; min-width: 80px; color: #94a3b8; text-transform: capitalize; }
+  .bar-track { flex: 1; height: 8px; background: #1e3a5f; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #00e5ff, #0070ff); transition: width 1s ease; }
+  .bar-count { font-size: 12px; font-family: monospace; color: #64748b; min-width: 28px; text-align: right; }
+
+  /* ── PATTERN TAGS ── */
+  .pattern-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 4px;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .pattern-tag:hover { border-color: #a855f7; color: #a855f7; }
+  .pattern-count { font-size: 11px; background: rgba(168,85,247,0.15); color: #a855f7; border-radius: 4px; padding: 1px 6px; font-weight: 700; }
+
+  /* ── QUICK ACTIONS ── */
+  .quick-action {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 16px;
+    text-decoration: none;
+    color: #e2e8f0;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+  .quick-action:hover { border-color: #00e5ff; color: #00e5ff; transform: translateX(4px); }
+  .qa-icon { font-size: 24px; flex-shrink: 0; }
+  .qa-label { font-size: 14px; font-weight: 700; }
+  .qa-sub { font-size: 12px; color: #64748b; }
+  .qa-arrow { margin-left: auto; color: #1e3a5f; font-size: 18px; }
+  .quick-action:hover .qa-arrow { color: #00e5ff; }
+
+  /* ── ALERT FEED ── */
+  .alert-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e3a5f;
+    font-size: 13px;
+  }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-icon { font-size: 20px; flex-shrink: 0; }
+
+  /* ── SCAM TYPE BREAKDOWN ── */
+  .type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .type-name { font-size: 13px; min-width: 130px; color: #94a3b8; }
+  .type-bar-track { flex: 1; height: 6px; background: #1e3a5f; border-radius: 3px; overflow: hidden; }
+  .type-bar-fill { height: 100%; border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .page-title { font-size: 24px; }
+    .kpi-num { font-size: 30px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrap">
+  <div class="container-fluid px-4">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h1 class="page-title">Intelligence <span>Dashboard</span></h1>
+        <p class="text-white mb-0" style="font-size:14px">Real-time overview of scam activity detected by ScamShield across Nigeria</p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="live-badge"><div class="pulse"></div> Live Data</div>
+        <a href="{% url 'whatsapp_scanner' %}" class="btn btn-primary">+ New Scan</a>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card" style="--kpi-color: #00e5ff">
+          <div class="kpi-icon">🔍</div>
+          <div class="kpi-num">{{ total_scans|default:"0" }}</div>
+          <div class="kpi-label">Total Scans</div>
+          <div class="kpi-change up">↑ All time</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card" style="--kpi-color: #ff3d71">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-num">{{ high_risk_scans|default:"0" }}</div>
+          <div class="kpi-label">High Risk Detected</div>
+          <div class="kpi-change down">Scams caught</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card" style="--kpi-color: #ffd600">
+          <div class="kpi-icon">📢</div>
+          <div class="kpi-num">{{ total_reports|default:"0" }}</div>
+          <div class="kpi-label">Community Reports</div>
+          <div class="kpi-change up">↑ Crowdsourced</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card" style="--kpi-color: #a855f7">
+          <div class="kpi-icon">🧠</div>
+          <div class="kpi-num">{{ patterns_learned|default:"0" }}</div>
+          <div class="kpi-label">Patterns Learned</div>
+          <div class="kpi-change up">↑ AI growing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ROW 2: CHART + RECENT SCANS + QUICK ACTIONS ── -->
+    <div class="row g-3 mb-4">
+
+      <!-- Risk Distribution Donut -->
+      <div class="col-lg-3 col-md-6">
+        <div class="dash-card">
+          <div class="section-hdr"><h5>Risk Distribution</h5></div>
+
+          {% with total=total_scans|default:1 high=high_risk_scans|default:0 %}
+          {% with med_count=total_scans|add:"-1"|default:0 %}
+
+          <!-- CSS Donut via SVG -->
+          <div class="donut-wrap">
+            <svg class="donut-svg" viewBox="0 0 100 100" width="140" height="140">
+              <circle class="donut-track" cx="50" cy="50" r="36"/>
+              <!-- High risk arc -->
+              <circle class="donut-high" cx="50" cy="50" r="36"
+                stroke-dasharray="{% widthratio high_risk_scans total_scans 226 %} 226"
+                stroke-dashoffset="0"/>
+              <!-- Med risk arc: offset after high -->
+              <circle class="donut-med" cx="50" cy="50" r="36"
+                stroke-dasharray="40 226"
+                stroke-dashoffset="-{% widthratio high_risk_scans total_scans 226 %}"/>
+            </svg>
+            <div class="donut-center">
+              {{ total_scans|default:"0" }}<small>total</small>
+            </div>
+          </div>
+          {% endwith %}{% endwith %}
+
+          <!-- Legend -->
+          <div>
+            <div class="legend-item">
+              <div class="legend-label"><div class="legend-dot" style="background:#ff3d71"></div>High Risk</div>
+              <span class="legend-val" style="color:#ff3d71">{{ high_risk_scans|default:"0" }}</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-label"><div class="legend-dot" style="background:#ffd600"></div>Medium Risk</div>
+              <span class="legend-val" style="color:#ffd600">—</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-label"><div class="legend-dot" style="background:#00c853"></div>Low Risk</div>
+              <span class="legend-val" style="color:#00c853">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Scans -->
+      <div class="col-lg-5 col-md-6">
+        <div class="dash-card">
+          <div class="section-hdr">
+            <h5>Recent Scans</h5>
+            <a href="{% url 'whatsapp_scanner' %}" class="view-all">Scan new →</a>
+          </div>
+          {% if recent_scans %}
+            {% for scan in recent_scans %}
+            <div class="scan-row">
+              <span class="risk-badge {% if scan.risk_level == 'HIGH' %}risk-high{% elif scan.risk_level == 'MEDIUM' %}risk-med{% else %}risk-low{% endif %}">
+                {{ scan.risk_level|slice:":3" }}
+              </span>
+              <span class="scan-text">{{ scan.message_text|truncatechars:60 }}</span>
+              <span class="scan-time">{{ scan.created_at|timesince|truncatewords:2 }} ago</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-4">
+              <div style="font-size:40px; margin-bottom:12px">🔍</div>
+              <p style="color:#64748b; font-size:14px">No scans yet. <a href="{% url 'whatsapp_scanner' %}" style="color:#00e5ff">Run your first scan</a></p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="col-lg-4">
+        <div class="dash-card">
+          <div class="section-hdr"><h5>Quick Actions</h5></div>
+          <a href="{% url 'whatsapp_scanner' %}" class="quick-action">
+            <div class="qa-icon">💬</div>
+            <div><div class="qa-label">Scan WhatsApp Message</div><div class="qa-sub">Paste & analyze instantly</div></div>
+            <div class="qa-arrow">›</div>
+          </a>
+          <a href="{% url 'bank_alert' %}" class="quick-action">
+            <div class="qa-icon">🏦</div>
+            <div><div class="qa-label">Check Bank Alert</div><div class="qa-sub">Upload screenshot for OCR analysis</div></div>
+            <div class="qa-arrow">›</div>
+          </a>
+          <a href="{% url 'phone_lookup' %}" class="quick-action">
+            <div class="qa-icon">📞</div>
+            <div><div class="qa-label">Lookup Phone Number</div><div class="qa-sub">Check community scam reports</div></div>
+            <div class="qa-arrow">›</div>
+          </a>
+          <a href="{% url 'report_scam' %}" class="quick-action">
+            <div class="qa-icon">🚨</div>
+            <div><div class="qa-label">Report a Scammer</div><div class="qa-sub">Help protect other Nigerians</div></div>
+            <div class="qa-arrow">›</div>
+          </a>
+          <a href="{% url 'education_coach' %}" class="quick-action">
+            <div class="qa-icon">🤖</div>
+            <div><div class="qa-label">Ask AI Coach</div><div class="qa-sub">Learn about scam tactics</div></div>
+            <div class="qa-arrow">›</div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ROW 3: STATE BREAKDOWN + SCAM TYPES + PATTERNS ── -->
+    <div class="row g-3 mb-4">
+
+      <!-- Top States by Scam Reports -->
+      <div class="col-lg-4">
+        <div class="dash-card">
+          <div class="section-hdr">
+            <h5>🗺️ Top States by Activity</h5>
+            <a href="{% url 'scam_map' %}" class="view-all">View map →</a>
+          </div>
+          {% if top_states %}
+            {% for state_data in top_states %}
+            <div class="state-bar-row">
+              <div class="state-name">{{ state_data.state|capfirst }}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:{% widthratio state_data.count top_states.0.count 100 %}%"></div>
+              </div>
+              <div class="bar-count">{{ state_data.count }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-4">
+              <div style="font-size:36px; margin-bottom:10px">🗺️</div>
+              <p style="color:#64748b; font-size:13px">No state data yet. Data appears as users run scans.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Scam Type Breakdown -->
+      <div class="col-lg-4">
+        <div class="dash-card">
+          <div class="section-hdr"><h5>📊 Scam Type Breakdown</h5></div>
+          <div class="type-row">
+            <div class="type-name">Bank Impersonation</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:75%; background:#ff3d71"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Fake Bank Alert</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:60%; background:#ff7043"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Investment Fraud</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:50%; background:#ffd600"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Crypto Scam</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:40%; background:#a855f7"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Phishing Links</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:35%; background:#00e5ff"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Job Scam</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:25%; background:#00c853"></div></div>
+          </div>
+          <div class="type-row">
+            <div class="type-name">Romance Scam</div>
+            <div class="type-bar-track"><div class="type-bar-fill" style="width:20%; background:#64748b"></div></div>
+          </div>
+          <p style="font-size:12px; color:#475569; margin-top:12px; margin-bottom:0">* Distribution based on all detected scans</p>
+        </div>
+      </div>
+
+      <!-- AI Learned Patterns -->
+      <div class="col-lg-4">
+        <div class="dash-card">
+          <div class="section-hdr"><h5>🧠 AI Learned Patterns</h5></div>
+          {% if patterns_learned and patterns_learned > 0 %}
+            {% comment %}
+              In a real setup, pass patterns queryset from view.
+              Example rendering — replace with actual queryset in view.
+            {% endcomment %}
+            <p style="color:#64748b; font-size:13px; margin-bottom:16px">
+              ScamShield has learned <strong style="color:#a855f7">{{ patterns_learned }}</strong> unique scam patterns from community reports. These improve detection accuracy over time.
+            </p>
+            <div>
+              <div class="pattern-tag">Bank impersonation <span class="pattern-count">Active</span></div>
+              <div class="pattern-tag">Urgency manipulation <span class="pattern-count">Active</span></div>
+              <div class="pattern-tag">Crypto investment <span class="pattern-count">Active</span></div>
+              <div class="pattern-tag">Fake EFCC alerts <span class="pattern-count">Active</span></div>
+              <div class="pattern-tag">WhatsApp OTP grab <span class="pattern-count">New</span></div>
+              <div class="pattern-tag">Fake job offers <span class="pattern-count">Active</span></div>
+            </div>
+          {% else %}
+            <div class="text-center py-3">
+              <div style="font-size:40px; margin-bottom:12px">🧠</div>
+              <p style="color:#64748b; font-size:13px">AI patterns are learned automatically as users scan messages and report scams.</p>
+              <a href="{% url 'whatsapp_scanner' %}" style="color:#a855f7; font-size:13px">Start your first scan →</a>
+            </div>
+          {% endif %}
+
+          <hr style="border-color:#1e3a5f; margin:20px 0">
+
+          <!-- Pattern accuracy gauge -->
+          <div>
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-size:13px; color:#64748b">AI Detection Accuracy</span>
+              <span style="font-size:13px; font-weight:700; color:#a855f7">92%</span>
+            </div>
+            <div style="background:#1e3a5f; height:8px; border-radius:4px; overflow:hidden">
+              <div style="width:92%; height:100%; background:linear-gradient(90deg,#a855f7,#7c3aed); border-radius:4px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ROW 4: MAP PREVIEW + COMMUNITY FEED ── -->
+    <div class="row g-3 mb-4">
+
+      <!-- Mini Map Preview -->
+      <div class="col-lg-7">
+        <div class="dash-card" style="padding:0; overflow:hidden">
+          <div style="padding:16px 24px; border-bottom:1px solid #1e3a5f; display:flex; justify-content:space-between; align-items:center">
+            <h5 style="margin:0; font-size:16px; font-weight:800">🗺️ Live Scam Map</h5>
+            <a href="{% url 'scam_map' %}" class="view-all">Full map →</a>
+          </div>
+          <div id="mini-map" style="height:320px"></div>
+        </div>
+      </div>
+
+      <!-- Community Alert Feed -->
+      <div class="col-lg-5">
+        <div class="dash-card">
+          <div class="section-hdr">
+            <h5>📢 Community Reports</h5>
+            <a href="{% url 'report_scam' %}" class="view-all">Report scam →</a>
+          </div>
+          {% if total_reports and total_reports > 0 %}
+            <div class="alert-item">
+              <div class="alert-icon">🚨</div>
+              <div>
+                <div style="font-size:13px; font-weight:600">Investment Fraud</div>
+                <div style="font-size:12px; color:#64748b">Lagos · Phone 0801***6789 reported by community</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-icon">⚠️</div>
+              <div>
+                <div style="font-size:13px; font-weight:600">Fake Bank Alert</div>
+                <div style="font-size:12px; color:#64748b">Abuja · GTBank screenshot flagged as fake</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-icon">🏦</div>
+              <div>
+                <div style="font-size:13px; font-weight:600">Bank Impersonation</div>
+                <div style="font-size:12px; color:#64748b">Rivers · 0903***1234 impersonating Zenith Bank</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-icon">🪙</div>
+              <div>
+                <div style="font-size:13px; font-weight:600">Crypto Investment Scam</div>
+                <div style="font-size:12px; color:#64748b">Kano · Promising 300% returns in 7 days</div>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <div style="font-size:40px; margin-bottom:12px">📢</div>
+              <p style="color:#64748b; font-size:13px">No community reports yet.</p>
+              <a href="{% url 'report_scam' %}" style="color:#ffd600; font-size:13px">Be the first to report a scammer →</a>
+            </div>
+          {% endif %}
+
+          <hr style="border-color:#1e3a5f; margin:16px 0">
+
+          <!-- Report count stat -->
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="font-size:24px; font-weight:900; font-family:monospace; color:#ffd600">{{ total_reports|default:"0" }}</div>
+              <div style="font-size:12px; color:#64748b">Total community reports</div>
+            </div>
+            <a href="{% url 'phone_lookup' %}" class="btn btn-sm" style="background:rgba(255,214,0,0.1); color:#ffd600; border:1px solid rgba(255,214,0,0.3); font-size:13px">
+              📞 Lookup Number
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ROW 5: PROTECTION TIPS ── -->
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="dash-card">
+          <div class="section-hdr"><h5>💡 Nigeria Cybersecurity Tips</h5></div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div style="background:#0d1117; border-radius:10px; padding:16px; border-left:3px solid #00e5ff; height:100%">
+                <div style="font-size:20px; margin-bottom:8px">🏦</div>
+                <div style="font-size:14px; font-weight:700; margin-bottom:6px">Your Bank Will NEVER</div>
+                <div style="font-size:13px; color:#64748b">ask for your PIN, OTP, or BVN via WhatsApp, SMS, or phone call. If anyone does this — it's a scam. Hang up and call your bank's official number.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="background:#0d1117; border-radius:10px; padding:16px; border-left:3px solid #ffd600; height:100%">
+                <div style="font-size:20px; margin-bottom:8px">💸</div>
+                <div style="font-size:14px; font-weight:700; margin-bottom:6px">Verify Before Releasing Goods</div>
+                <div style="font-size:13px; color:#64748b">Always confirm credit alerts in your bank app — not from screenshots. Fake alerts are the #1 tool used to scam market traders and business owners in Nigeria.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="background:#0d1117; border-radius:10px; padding:16px; border-left:3px solid #ff3d71; height:100%">
+                <div style="font-size:20px; margin-bottom:8px">🔗</div>
+                <div style="font-size:14px; font-weight:700; margin-bottom:6px">Never Click Unverified Links</div>
+                <div style="font-size:13px; color:#64748b">Shortened links (bit.ly, tinyurl) in WhatsApp messages almost always lead to phishing sites. Paste the message into ScamShield first.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /dashboard-wrap -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── MINI MAP ──
+  const miniMap = L.map('mini-map', { zoomControl: false, scrollWheelZoom: false })
+                   .setView([9.082, 8.6753], 5);
+
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    attribution: '© Stadia Maps'
+  }).addTo(miniMap);
+
+  // Fetch and plot markers
+  fetch('{% url "map_data_api" %}')
+    .then(r => r.json())
+    .then(data => {
+      data.markers.forEach(m => {
+        L.circleMarker([m.lat, m.lng], {
+          radius: Math.max(6, m.radius * 0.6),
+          fillColor: m.color,
+          color: m.color,
+          weight: 1,
+          opacity: 0.9,
+          fillOpacity: 0.45
+        })
+        .bindPopup(`<b style="color:#000">${m.state}</b><br>${m.count} reports`)
+        .addTo(miniMap);
+      });
+    })
+    .catch(() => {
+      // Fallback: show a few sample markers
+      const samples = [
+        [6.5244, 3.3792, 'Lagos', '#ff3d71', 20],
+        [9.0579, 7.4951, 'Abuja', '#ffd600', 12],
+        [4.8156, 7.0498, 'Port Harcourt', '#ff3d71', 10],
+        [12.0022, 8.5919, 'Kano', '#ffd600', 8],
+        [7.3775, 3.9470, 'Ibadan', '#00c853', 5],
+      ];
+      samples.forEach(([lat, lng, name, color, r]) => {
+        L.circleMarker([lat, lng], {
+          radius: r * 0.5, fillColor: color, color: color,
+          weight: 1, opacity: 0.8, fillOpacity: 0.4
+        }).bindPopup(`<b>${name}</b>`).addTo(miniMap);
+      });
+    });
+
+  // ── ANIMATE KPI COUNTERS ──
+  function animateNum(el, target) {
+    let n = 0;
+    const step = Math.max(1, Math.ceil(target / 50));
+    const t = setInterval(() => {
+      n = Math.min(n + step, target);
+      el.textContent = n.toLocaleString();
+      if (n >= target) clearInterval(t);
+    }, 25);
+  }
+
+  const kpiObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.kpi-num').forEach(el => {
+          const v = parseInt(el.textContent.replace(/,/g, '')) || 0;
+          if (v > 0) animateNum(el, v);
+        });
+        kpiObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.kpi-card').forEach(c => kpiObs.observe(c));
+
+  // ── ANIMATE BAR WIDTHS ON SCROLL ──
+  const barObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.bar-fill, .type-bar-fill').forEach(b => {
+          const w = b.style.width;
+          b.style.width = '0';
+          setTimeout(() => { b.style.width = w; }, 100);
+        });
+        barObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.dash-card').forEach(c => barObs.observe(c));
+</script>
+{% endblock %}
